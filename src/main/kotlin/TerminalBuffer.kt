@@ -28,10 +28,14 @@ data class Cell(
 )
 
 class TerminalBuffer(
-    val width: Int,
-    val height: Int,
+    width: Int,
+    height: Int,
     val maxScrollback: Int = 1000,
 ) {
+    var width: Int = width
+        private set
+    var height: Int = height
+        private set
     val screen: Array<Array<Cell>> = Array(height) { blankLine() }
 
     // -- Cursor ---------------------------------------------------------------
@@ -118,6 +122,10 @@ class TerminalBuffer(
     val scrollback: ArrayDeque<Array<Cell>> = ArrayDeque()
 
     val scrollbackSize: Int get() = scrollback.size
+
+    // -- Resize ---------------------------------------------------------------
+
+    fun resize(newWidth: Int, newHeight: Int) {}
 
     // -- Content access -------------------------------------------------------
     //
