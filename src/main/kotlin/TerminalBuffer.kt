@@ -129,23 +129,21 @@ class TerminalBuffer(
 
     fun getLine(row: Int): String {
         val line = lineAt(row) ?: return ""
-        return String(CharArray(width) { line[it].char })
+        return lineToString(line)
     }
 
     fun getScreenContent(): String =
-        (0 until height).joinToString("\n") { row ->
-            String(CharArray(width) { col -> screen[row][col].char })
-        }
+        (scrollbackSize until scrollbackSize + height)
+            .joinToString("\n") { getLine(it) }
 
-    fun getAllContent(): String {
-        val sb = StringBuilder()
-        val totalRows = scrollbackSize + height
-        for (i in 0 until totalRows) {
-            if (i > 0) sb.append('\n')
-            sb.append(getLine(i))
-        }
-        return sb.toString()
-    }
+    fun getAllContent(): String =
+        (0 until scrollbackSize + height)
+            .joinToString("\n") { getLine(it) }
+
+    // -- Internal helpers -----------------------------------------------------
+
+    private fun lineToString(line: Array<Cell>): String =
+        String(CharArray(line.size) { line[it].char })
 
     private fun cellAt(col: Int, row: Int): Cell? {
         val line = lineAt(row) ?: return null
@@ -160,8 +158,6 @@ class TerminalBuffer(
         if (screenRow >= height) return null
         return screen[screenRow]
     }
-
-    // -- Internal helpers -----------------------------------------------------
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
 
