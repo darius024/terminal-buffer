@@ -694,3 +694,105 @@ class ClearScreenTest {
         assertEquals(' ', buf.screen[0][0].char)
     }
 }
+
+// -- Content access -----------------------------------------------------------
+//
+// Unified row coordinates: row 0 = oldest scrollback line,
+// row scrollbackSize = top screen line.
+
+class ContentAccessTest {
+
+    @Test fun `getChar from screen`() {
+        val buf = TerminalBuffer(4, 2)
+        buf.writeText("ABCD")
+        assertEquals('A', buf.getChar(0, 0))
+        assertEquals('D', buf.getChar(3, 0))
+    }
+
+    @Test fun `getChar from scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEF")
+        // Scrollback row 0 = "ABC", screen row 0 (unified row 1) = "DEF"
+        assertEquals('A', buf.getChar(0, 0))
+        assertEquals('C', buf.getChar(2, 0))
+        assertEquals('D', buf.getChar(0, 1))
+    }
+
+    @Test fun `getChar out of bounds returns space`() {
+        val buf = TerminalBuffer(4, 2)
+        assertEquals(' ', buf.getChar(-1, 0))
+        assertEquals(' ', buf.getChar(4, 0))
+        assertEquals(' ', buf.getChar(0, -1))
+        assertEquals(' ', buf.getChar(0, 2))
+    }
+
+    @Test fun `getAttributes from screen`() {
+        val buf = TerminalBuffer(4, 2)
+        buf.setAttributes(foreground = Colour.RED)
+        buf.writeText("A")
+        assertEquals(CellAttributes(foreground = Colour.RED), buf.getAttributes(0, 0))
+        assertEquals(CellAttributes(), buf.getAttributes(1, 0))
+    }
+
+    @Test fun `getAttributes from scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.setAttributes(foreground = Colour.GREEN)
+        buf.writeText("ABCDEF")
+        assertEquals(CellAttributes(foreground = Colour.GREEN), buf.getAttributes(0, 0))
+    }
+
+    @Test fun `getAttributes out of bounds returns default`() {
+        val buf = TerminalBuffer(4, 2)
+        assertEquals(CellAttributes(), buf.getAttributes(99, 99))
+    }
+
+    @Test fun `getLine from screen`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.writeText("Hello")
+        assertEquals("Hello", buf.getLine(0))
+    }
+
+    @Test fun `getLine from scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEF")
+        assertEquals("ABC", buf.getLine(0))
+        assertEquals("DEF", buf.getLine(1))
+    }
+
+    @Test fun `getLine pads with spaces for partial content`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.writeText("Hi")
+        assertEquals("Hi   ", buf.getLine(0))
+    }
+
+    @Test fun `getLine out of bounds returns empty string`() {
+        val buf = TerminalBuffer(4, 2)
+        assertEquals("", buf.getLine(-1))
+        assertEquals("", buf.getLine(99))
+    }
+
+    @Test fun `getScreenContent returns all screen lines`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABCDEF")
+        assertEquals("ABC\nDEF", buf.getScreenContent())
+    }
+
+    @Test fun `getScreenContent trims nothing`() {
+        val buf = TerminalBuffer(4, 2)
+        buf.writeText("Hi")
+        assertEquals("Hi  \n    ", buf.getScreenContent())
+    }
+
+    @Test fun `getAllContent includes scrollback and screen`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEFGHI")
+        // Scrollback: "ABC", "DEF"; Screen: "GHI", "   "
+        assertEquals("ABC\nDEF\nGHI\n   ", buf.getAllContent())
+    }
+
+    @Test fun `getAllContent with no scrollback equals getScreenContent`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABC")
+        assertEquals(buf.getScreenContent(), buf.getAllContent())
+    }
+}

@@ -117,6 +117,18 @@ class TerminalBuffer(
 
     val scrollbackSize: Int get() = scrollback.size
 
+    // -- Content access -------------------------------------------------------
+
+    fun getChar(col: Int, row: Int): Char = ' '
+
+    fun getAttributes(col: Int, row: Int): CellAttributes = CellAttributes()
+
+    fun getLine(row: Int): String = ""
+
+    fun getScreenContent(): String = ""
+
+    fun getAllContent(): String = ""
+
     // -- Internal helpers -----------------------------------------------------
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
