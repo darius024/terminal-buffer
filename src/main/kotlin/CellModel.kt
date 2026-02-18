@@ -29,7 +29,7 @@ data class Cell(
 )
 
 /** Display width of a character: 2 for CJK / fullwidth, 1 otherwise. */
-fun charDisplayWidth(ch: Char): Int = when (ch.code) {
+fun charDisplayWidth(character: Char): Int = when (character.code) {
     in 0x1100..0x115F,
     in 0x2E80..0x303F,
     in 0x3040..0x30FF,

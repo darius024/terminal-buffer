@@ -13,23 +13,23 @@ import kotlin.test.assertTrue
 class BufferConstructionTest {
 
     @Test fun `stores configured dimensions`() {
-        val buf = TerminalBuffer(80, 24, maxScrollback = 1000)
-        assertEquals(80, buf.width)
-        assertEquals(24, buf.height)
+        val buffer = TerminalBuffer(80, 24, maxScrollback = 1000)
+        assertEquals(80, buffer.width)
+        assertEquals(24, buffer.height)
     }
 
     @Test fun `cursor starts at origin`() {
-        val buf = TerminalBuffer(80, 24)
-        assertEquals(0, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
     }
 
     @Test fun `screen is initially blank spaces`() {
-        val buf = TerminalBuffer(4, 3)
+        val buffer = TerminalBuffer(4, 3)
         for (row in 0 until 3) {
             for (col in 0 until 4) {
-                assertEquals(' ', buf.screen[row][col].char)
-                assertEquals(CellAttributes(), buf.screen[row][col].attributes)
+                assertEquals(' ', buffer.screen[row][col].char)
+                assertEquals(CellAttributes(), buffer.screen[row][col].attributes)
             }
         }
     }
@@ -40,34 +40,34 @@ class BufferConstructionTest {
 class CursorPositionTest {
 
     @Test fun `set cursor to valid position`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(10, 5)
-        assertEquals(10, buf.cursorCol)
-        assertEquals(5, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(10, 5)
+        assertEquals(10, buffer.cursorCol)
+        assertEquals(5, buffer.cursorRow)
     }
 
     @Test fun `set cursor clamps column to width minus one`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(100, 0)
-        assertEquals(79, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(100, 0)
+        assertEquals(79, buffer.cursorCol)
     }
 
     @Test fun `set cursor clamps row to height minus one`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, 30)
-        assertEquals(23, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, 30)
+        assertEquals(23, buffer.cursorRow)
     }
 
     @Test fun `set cursor clamps negative column to zero`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(-5, 0)
-        assertEquals(0, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(-5, 0)
+        assertEquals(0, buffer.cursorCol)
     }
 
     @Test fun `set cursor clamps negative row to zero`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, -3)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, -3)
+        assertEquals(0, buffer.cursorRow)
     }
 }
 
@@ -76,79 +76,79 @@ class CursorPositionTest {
 class CursorMovementTest {
 
     @Test fun `move right by N`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, 0)
-        buf.moveCursorRight(5)
-        assertEquals(5, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, 0)
+        buffer.moveCursorRight(5)
+        assertEquals(5, buffer.cursorCol)
     }
 
     @Test fun `move right clamps at right edge`() {
-        val buf = TerminalBuffer(10, 5)
-        buf.setCursor(7, 0)
-        buf.moveCursorRight(20)
-        assertEquals(9, buf.cursorCol)
+        val buffer = TerminalBuffer(10, 5)
+        buffer.setCursor(7, 0)
+        buffer.moveCursorRight(20)
+        assertEquals(9, buffer.cursorCol)
     }
 
     @Test fun `move left by N`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(10, 0)
-        buf.moveCursorLeft(3)
-        assertEquals(7, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(10, 0)
+        buffer.moveCursorLeft(3)
+        assertEquals(7, buffer.cursorCol)
     }
 
     @Test fun `move left clamps at left edge`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(2, 0)
-        buf.moveCursorLeft(10)
-        assertEquals(0, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(2, 0)
+        buffer.moveCursorLeft(10)
+        assertEquals(0, buffer.cursorCol)
     }
 
     @Test fun `move down by N`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, 0)
-        buf.moveCursorDown(5)
-        assertEquals(5, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, 0)
+        buffer.moveCursorDown(5)
+        assertEquals(5, buffer.cursorRow)
     }
 
     @Test fun `move down clamps at bottom edge`() {
-        val buf = TerminalBuffer(10, 5)
-        buf.setCursor(0, 3)
-        buf.moveCursorDown(20)
-        assertEquals(4, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 5)
+        buffer.setCursor(0, 3)
+        buffer.moveCursorDown(20)
+        assertEquals(4, buffer.cursorRow)
     }
 
     @Test fun `move up by N`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, 10)
-        buf.moveCursorUp(3)
-        assertEquals(7, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, 10)
+        buffer.moveCursorUp(3)
+        assertEquals(7, buffer.cursorRow)
     }
 
     @Test fun `move up clamps at top edge`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(0, 2)
-        buf.moveCursorUp(10)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(0, 2)
+        buffer.moveCursorUp(10)
+        assertEquals(0, buffer.cursorRow)
     }
 
     @Test fun `move does not affect the other axis`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(5, 10)
-        buf.moveCursorRight(3)
-        assertEquals(10, buf.cursorRow)
-        buf.moveCursorDown(2)
-        assertEquals(8, buf.cursorCol)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(5, 10)
+        buffer.moveCursorRight(3)
+        assertEquals(10, buffer.cursorRow)
+        buffer.moveCursorDown(2)
+        assertEquals(8, buffer.cursorCol)
     }
 
     @Test fun `move by zero is a no-op`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setCursor(5, 10)
-        buf.moveCursorRight(0)
-        buf.moveCursorLeft(0)
-        buf.moveCursorUp(0)
-        buf.moveCursorDown(0)
-        assertEquals(5, buf.cursorCol)
-        assertEquals(10, buf.cursorRow)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setCursor(5, 10)
+        buffer.moveCursorRight(0)
+        buffer.moveCursorLeft(0)
+        buffer.moveCursorUp(0)
+        buffer.moveCursorDown(0)
+        assertEquals(5, buffer.cursorCol)
+        assertEquals(10, buffer.cursorRow)
     }
 }
 
@@ -157,47 +157,47 @@ class CursorMovementTest {
 class AttributeTest {
 
     @Test fun `default attributes are all DEFAULT with no styles`() {
-        val buf = TerminalBuffer(80, 24)
-        assertEquals(CellAttributes(), buf.currentAttributes)
+        val buffer = TerminalBuffer(80, 24)
+        assertEquals(CellAttributes(), buffer.currentAttributes)
     }
 
     @Test fun `set foreground colour`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setAttributes(foreground = Colour.RED)
-        assertEquals(Colour.RED, buf.currentAttributes.foreground)
-        assertEquals(Colour.DEFAULT, buf.currentAttributes.background)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setAttributes(foreground = Colour.RED)
+        assertEquals(Colour.RED, buffer.currentAttributes.foreground)
+        assertEquals(Colour.DEFAULT, buffer.currentAttributes.background)
     }
 
     @Test fun `set background colour`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setAttributes(background = Colour.BLUE)
-        assertEquals(Colour.BLUE, buf.currentAttributes.background)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setAttributes(background = Colour.BLUE)
+        assertEquals(Colour.BLUE, buffer.currentAttributes.background)
     }
 
     @Test fun `set style flags`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setAttributes(styles = setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE))
-        assertEquals(setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE), buf.currentAttributes.styles)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setAttributes(styles = setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE))
+        assertEquals(setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE), buffer.currentAttributes.styles)
     }
 
     @Test fun `set replaces all attributes at once`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setAttributes(
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setAttributes(
             foreground = Colour.GREEN,
             background = Colour.YELLOW,
             styles = setOf(StyleFlag.ITALIC),
         )
         assertEquals(
             CellAttributes(Colour.GREEN, Colour.YELLOW, setOf(StyleFlag.ITALIC)),
-            buf.currentAttributes,
+            buffer.currentAttributes,
         )
     }
 
     @Test fun `set attributes overrides previous`() {
-        val buf = TerminalBuffer(80, 24)
-        buf.setAttributes(foreground = Colour.RED)
-        buf.setAttributes(foreground = Colour.BLUE)
-        assertEquals(Colour.BLUE, buf.currentAttributes.foreground)
+        val buffer = TerminalBuffer(80, 24)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.setAttributes(foreground = Colour.BLUE)
+        assertEquals(Colour.BLUE, buffer.currentAttributes.foreground)
     }
 }
 
@@ -206,64 +206,64 @@ class AttributeTest {
 class WriteTextTest {
 
     @Test fun `write places characters at cursor`() {
-        val buf = TerminalBuffer(10, 3)
-        buf.writeText("Hi")
-        assertEquals('H', buf.screen[0][0].char)
-        assertEquals('i', buf.screen[0][1].char)
-        assertEquals(' ', buf.screen[0][2].char)
+        val buffer = TerminalBuffer(10, 3)
+        buffer.writeText("Hi")
+        assertEquals('H', buffer.screen[0][0].char)
+        assertEquals('i', buffer.screen[0][1].char)
+        assertEquals(' ', buffer.screen[0][2].char)
     }
 
     @Test fun `write uses current attributes`() {
-        val buf = TerminalBuffer(10, 3)
-        buf.setAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
-        buf.writeText("A")
+        val buffer = TerminalBuffer(10, 3)
+        buffer.setAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
+        buffer.writeText("A")
         val expected = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
-        assertEquals(expected, buf.screen[0][0].attributes)
+        assertEquals(expected, buffer.screen[0][0].attributes)
     }
 
     @Test fun `write advances cursor`() {
-        val buf = TerminalBuffer(10, 3)
-        buf.writeText("Hello")
-        assertEquals(5, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 3)
+        buffer.writeText("Hello")
+        assertEquals(5, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
     }
 
     @Test fun `write at mid-line overwrites existing`() {
-        val buf = TerminalBuffer(10, 3)
-        buf.writeText("ABCDE")
-        buf.setCursor(1, 0)
-        buf.writeText("xx")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('x', buf.screen[0][1].char)
-        assertEquals('x', buf.screen[0][2].char)
-        assertEquals('D', buf.screen[0][3].char)
+        val buffer = TerminalBuffer(10, 3)
+        buffer.writeText("ABCDE")
+        buffer.setCursor(1, 0)
+        buffer.writeText("xx")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('x', buffer.screen[0][1].char)
+        assertEquals('x', buffer.screen[0][2].char)
+        assertEquals('D', buffer.screen[0][3].char)
     }
 
     @Test fun `write wraps to next line at right edge`() {
-        val buf = TerminalBuffer(4, 3)
-        buf.writeText("ABCDEF")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('D', buf.screen[0][3].char)
-        assertEquals('E', buf.screen[1][0].char)
-        assertEquals('F', buf.screen[1][1].char)
-        assertEquals(2, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        val buffer = TerminalBuffer(4, 3)
+        buffer.writeText("ABCDEF")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('D', buffer.screen[0][3].char)
+        assertEquals('E', buffer.screen[1][0].char)
+        assertEquals('F', buffer.screen[1][1].char)
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 
     @Test fun `write wraps across multiple lines`() {
-        val buf = TerminalBuffer(3, 4)
-        buf.writeText("ABCDEFGH")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('D', buf.screen[1][0].char)
-        assertEquals('G', buf.screen[2][0].char)
-        assertEquals('H', buf.screen[2][1].char)
-        assertEquals(2, buf.cursorCol)
-        assertEquals(2, buf.cursorRow)
+        val buffer = TerminalBuffer(3, 4)
+        buffer.writeText("ABCDEFGH")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('D', buffer.screen[1][0].char)
+        assertEquals('G', buffer.screen[2][0].char)
+        assertEquals('H', buffer.screen[2][1].char)
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(2, buffer.cursorRow)
     }
 
     @Test fun `write auto-scrolls when reaching bottom`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("ABCDEF")
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("ABCDEF")
         // Screen is full: row 0 = "DEF", row 1 = "   " — wait, no.
         // After writing 6 chars in a 3×2 buffer:
         //   "ABC" fills row 0, wraps to row 1 → "DEF" fills row 1,
@@ -272,32 +272,32 @@ class WriteTextTest {
         // But we only wrote 6 chars = 2 full lines, so the wrap after "F" triggers scroll.
         // Actually: after "DEF" cursor would be at col 0, row 2 → triggers scroll.
         // After scroll: row 0 = "DEF", row 1 = blank, cursor at (0, 1).
-        assertEquals('D', buf.screen[0][0].char)
-        assertEquals('E', buf.screen[0][1].char)
-        assertEquals('F', buf.screen[0][2].char)
-        assertEquals(' ', buf.screen[1][0].char)
-        assertEquals(0, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        assertEquals('D', buffer.screen[0][0].char)
+        assertEquals('E', buffer.screen[0][1].char)
+        assertEquals('F', buffer.screen[0][2].char)
+        assertEquals(' ', buffer.screen[1][0].char)
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 
     @Test fun `write scrolls multiple times`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("ABCDEFGHI")
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("ABCDEFGHI")
         // 9 chars in 3×2: fills 3 full lines, but only 2 fit.
         // Row 0 = "GHI", row 1 = blank, cursor at (0, 1).
-        assertEquals('G', buf.screen[0][0].char)
-        assertEquals('H', buf.screen[0][1].char)
-        assertEquals('I', buf.screen[0][2].char)
-        assertEquals(0, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        assertEquals('G', buffer.screen[0][0].char)
+        assertEquals('H', buffer.screen[0][1].char)
+        assertEquals('I', buffer.screen[0][2].char)
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 
     @Test fun `write empty string is a no-op`() {
-        val buf = TerminalBuffer(10, 3)
-        buf.writeText("")
-        assertEquals(0, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
-        assertEquals(' ', buf.screen[0][0].char)
+        val buffer = TerminalBuffer(10, 3)
+        buffer.writeText("")
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
+        assertEquals(' ', buffer.screen[0][0].char)
     }
 }
 
@@ -306,83 +306,83 @@ class WriteTextTest {
 class InsertTextTest {
 
     @Test fun `insert at start shifts content right`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("CDEF")
-        buf.setCursor(0, 0)
-        buf.insertText("AB")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals('C', buf.screen[0][2].char)
-        assertEquals('F', buf.screen[0][5].char)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("CDEF")
+        buffer.setCursor(0, 0)
+        buffer.insertText("AB")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals('C', buffer.screen[0][2].char)
+        assertEquals('F', buffer.screen[0][5].char)
     }
 
     @Test fun `insert at middle shifts tail right`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("ABEF")
-        buf.setCursor(2, 0)
-        buf.insertText("CD")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals('C', buf.screen[0][2].char)
-        assertEquals('D', buf.screen[0][3].char)
-        assertEquals('E', buf.screen[0][4].char)
-        assertEquals('F', buf.screen[0][5].char)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("ABEF")
+        buffer.setCursor(2, 0)
+        buffer.insertText("CD")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals('C', buffer.screen[0][2].char)
+        assertEquals('D', buffer.screen[0][3].char)
+        assertEquals('E', buffer.screen[0][4].char)
+        assertEquals('F', buffer.screen[0][5].char)
     }
 
     @Test fun `insert advances cursor past inserted text`() {
-        val buf = TerminalBuffer(10, 2)
-        buf.writeText("ABEF")
-        buf.setCursor(2, 0)
-        buf.insertText("CD")
-        assertEquals(4, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("ABEF")
+        buffer.setCursor(2, 0)
+        buffer.insertText("CD")
+        assertEquals(4, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
     }
 
     @Test fun `insert uses current attributes for new text`() {
-        val buf = TerminalBuffer(10, 2)
-        buf.writeText("AB")
-        buf.setCursor(1, 0)
-        buf.setAttributes(foreground = Colour.RED)
-        buf.insertText("X")
-        val red = CellAttributes(foreground = Colour.RED)
-        assertEquals(red, buf.screen[0][1].attributes)
-        assertEquals(CellAttributes(), buf.screen[0][0].attributes)
-        assertEquals(CellAttributes(), buf.screen[0][2].attributes)
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("AB")
+        buffer.setCursor(1, 0)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.insertText("X")
+        val redAttributes = CellAttributes(foreground = Colour.RED)
+        assertEquals(redAttributes, buffer.screen[0][1].attributes)
+        assertEquals(CellAttributes(), buffer.screen[0][0].attributes)
+        assertEquals(CellAttributes(), buffer.screen[0][2].attributes)
     }
 
     @Test fun `insert wraps overflow to next line`() {
-        val buf = TerminalBuffer(4, 3)
-        buf.writeText("ABCD")
-        buf.setCursor(2, 0)
-        buf.insertText("XX")
+        val buffer = TerminalBuffer(4, 3)
+        buffer.writeText("ABCD")
+        buffer.setCursor(2, 0)
+        buffer.insertText("XX")
         // Row 0: A B X X, Row 1: C D _ _
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals('X', buf.screen[0][2].char)
-        assertEquals('X', buf.screen[0][3].char)
-        assertEquals('C', buf.screen[1][0].char)
-        assertEquals('D', buf.screen[1][1].char)
-        assertEquals(' ', buf.screen[1][2].char)
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals('X', buffer.screen[0][2].char)
+        assertEquals('X', buffer.screen[0][3].char)
+        assertEquals('C', buffer.screen[1][0].char)
+        assertEquals('D', buffer.screen[1][1].char)
+        assertEquals(' ', buffer.screen[1][2].char)
     }
 
     @Test fun `insert on empty line`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.insertText("Hi")
-        assertEquals('H', buf.screen[0][0].char)
-        assertEquals('i', buf.screen[0][1].char)
-        assertEquals(' ', buf.screen[0][2].char)
-        assertEquals(2, buf.cursorCol)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.insertText("Hi")
+        assertEquals('H', buffer.screen[0][0].char)
+        assertEquals('i', buffer.screen[0][1].char)
+        assertEquals(' ', buffer.screen[0][2].char)
+        assertEquals(2, buffer.cursorCol)
     }
 
     @Test fun `insert empty string is a no-op`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("ABC")
-        buf.setCursor(1, 0)
-        buf.insertText("")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals('C', buf.screen[0][2].char)
-        assertEquals(1, buf.cursorCol)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("ABC")
+        buffer.setCursor(1, 0)
+        buffer.insertText("")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals('C', buffer.screen[0][2].char)
+        assertEquals(1, buffer.cursorCol)
     }
 }
 
@@ -391,50 +391,50 @@ class InsertTextTest {
 class FillLineTest {
 
     @Test fun `fill line with character`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.fillLine('#')
+        val buffer = TerminalBuffer(5, 2)
+        buffer.fillLine('#')
         for (col in 0 until 5) {
-            assertEquals('#', buf.screen[0][col].char)
+            assertEquals('#', buffer.screen[0][col].char)
         }
     }
 
     @Test fun `fill line uses current attributes`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.setAttributes(foreground = Colour.GREEN)
-        buf.fillLine('*')
+        val buffer = TerminalBuffer(5, 2)
+        buffer.setAttributes(foreground = Colour.GREEN)
+        buffer.fillLine('*')
         val expected = CellAttributes(foreground = Colour.GREEN)
         for (col in 0 until 5) {
-            assertEquals(expected, buf.screen[0][col].attributes)
+            assertEquals(expected, buffer.screen[0][col].attributes)
         }
     }
 
     @Test fun `fill line fills the cursor row`() {
-        val buf = TerminalBuffer(4, 3)
-        buf.setCursor(0, 1)
-        buf.fillLine('-')
+        val buffer = TerminalBuffer(4, 3)
+        buffer.setCursor(0, 1)
+        buffer.fillLine('-')
         for (col in 0 until 4) {
-            assertEquals(' ', buf.screen[0][col].char)
-            assertEquals('-', buf.screen[1][col].char)
-            assertEquals(' ', buf.screen[2][col].char)
+            assertEquals(' ', buffer.screen[0][col].char)
+            assertEquals('-', buffer.screen[1][col].char)
+            assertEquals(' ', buffer.screen[2][col].char)
         }
     }
 
     @Test fun `fill with space clears the line`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.writeText("Hello")
-        buf.setCursor(0, 0)
-        buf.fillLine(' ')
+        val buffer = TerminalBuffer(5, 2)
+        buffer.writeText("Hello")
+        buffer.setCursor(0, 0)
+        buffer.fillLine(' ')
         for (col in 0 until 5) {
-            assertEquals(' ', buf.screen[0][col].char)
+            assertEquals(' ', buffer.screen[0][col].char)
         }
     }
 
     @Test fun `fill does not move cursor`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.setCursor(2, 1)
-        buf.fillLine('X')
-        assertEquals(2, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        val buffer = TerminalBuffer(5, 2)
+        buffer.setCursor(2, 1)
+        buffer.fillLine('X')
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 }
 
@@ -443,33 +443,33 @@ class FillLineTest {
 class InsertLineTest {
 
     @Test fun `insert line adds blank row at bottom`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("ABCDEF")
-        buf.insertLine()
-        assertEquals(' ', buf.screen[1][0].char)
-        assertEquals(' ', buf.screen[1][1].char)
-        assertEquals(' ', buf.screen[1][2].char)
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("ABCDEF")
+        buffer.insertLine()
+        assertEquals(' ', buffer.screen[1][0].char)
+        assertEquals(' ', buffer.screen[1][1].char)
+        assertEquals(' ', buffer.screen[1][2].char)
     }
 
     @Test fun `insert line shifts rows up`() {
-        val buf = TerminalBuffer(3, 3)
-        buf.writeText("ABC")
-        buf.setCursor(0, 1)
-        buf.writeText("DEF")
-        buf.insertLine()
+        val buffer = TerminalBuffer(3, 3)
+        buffer.writeText("ABC")
+        buffer.setCursor(0, 1)
+        buffer.writeText("DEF")
+        buffer.insertLine()
         // Row 0 ("ABC") scrolled off; row 1 ("DEF") becomes row 0; blank at bottom
-        assertEquals('D', buf.screen[0][0].char)
-        assertEquals('E', buf.screen[0][1].char)
-        assertEquals('F', buf.screen[0][2].char)
-        assertEquals(' ', buf.screen[1][0].char)
+        assertEquals('D', buffer.screen[0][0].char)
+        assertEquals('E', buffer.screen[0][1].char)
+        assertEquals('F', buffer.screen[0][2].char)
+        assertEquals(' ', buffer.screen[1][0].char)
     }
 
     @Test fun `insert line does not move cursor`() {
-        val buf = TerminalBuffer(5, 3)
-        buf.setCursor(2, 1)
-        buf.insertLine()
-        assertEquals(2, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        val buffer = TerminalBuffer(5, 3)
+        buffer.setCursor(2, 1)
+        buffer.insertLine()
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 }
 
@@ -478,65 +478,65 @@ class InsertLineTest {
 class ScrollbackTest {
 
     @Test fun `scrollback starts empty`() {
-        val buf = TerminalBuffer(5, 3, maxScrollback = 10)
-        assertEquals(0, buf.scrollbackSize)
+        val buffer = TerminalBuffer(5, 3, maxScrollback = 10)
+        assertEquals(0, buffer.scrollbackSize)
     }
 
     @Test fun `write auto-scroll pushes line to scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEF")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEF")
         // "ABC" scrolled off the top into scrollback
-        assertEquals(1, buf.scrollbackSize)
-        assertEquals('A', buf.scrollback[0][0].char)
-        assertEquals('B', buf.scrollback[0][1].char)
-        assertEquals('C', buf.scrollback[0][2].char)
+        assertEquals(1, buffer.scrollbackSize)
+        assertEquals('A', buffer.scrollback[0][0].char)
+        assertEquals('B', buffer.scrollback[0][1].char)
+        assertEquals('C', buffer.scrollback[0][2].char)
     }
 
     @Test fun `insert line pushes top row to scrollback`() {
-        val buf = TerminalBuffer(3, 3, maxScrollback = 10)
-        buf.writeText("ABC")
-        buf.setCursor(0, 1)
-        buf.writeText("DEF")
-        buf.insertLine()
-        assertEquals(1, buf.scrollbackSize)
-        assertEquals('A', buf.scrollback[0][0].char)
+        val buffer = TerminalBuffer(3, 3, maxScrollback = 10)
+        buffer.writeText("ABC")
+        buffer.setCursor(0, 1)
+        buffer.writeText("DEF")
+        buffer.insertLine()
+        assertEquals(1, buffer.scrollbackSize)
+        assertEquals('A', buffer.scrollback[0][0].char)
     }
 
     @Test fun `multiple scrolls accumulate in scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 100)
-        buf.writeText("ABCDEFGHI")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 100)
+        buffer.writeText("ABCDEFGHI")
         // 3 full lines in 3×2: two scroll events
-        assertEquals(2, buf.scrollbackSize)
-        assertEquals('A', buf.scrollback[0][0].char)
-        assertEquals('D', buf.scrollback[1][0].char)
+        assertEquals(2, buffer.scrollbackSize)
+        assertEquals('A', buffer.scrollback[0][0].char)
+        assertEquals('D', buffer.scrollback[1][0].char)
     }
 
     @Test fun `scrollback respects max size`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 2)
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 2)
         // Write 4 full lines → 2 scrolls → scrollback would have 2 entries
-        buf.writeText("ABCDEFGHIJKL")
+        buffer.writeText("ABCDEFGHIJKL")
         // 4 lines, 2-row screen: 2 scrolls, but then 2 more scrolls = 4 total pushed
         // With max 2: oldest are dropped
-        assertTrue(buf.scrollbackSize <= 2)
+        assertTrue(buffer.scrollbackSize <= 2)
     }
 
     @Test fun `oldest scrollback lines are dropped when max exceeded`() {
-        val buf = TerminalBuffer(2, 2, maxScrollback = 2)
+        val buffer = TerminalBuffer(2, 2, maxScrollback = 2)
         // Write 5 full lines: AABB CCDD EEFF GGHH IIJJ
-        buf.writeText("AABBCCDDEEFFGGHH")
+        buffer.writeText("AABBCCDDEEFFGGHH")
         // Many scrolls, only last 2 scrollback lines survive
-        assertEquals(2, buf.scrollbackSize)
+        assertEquals(2, buffer.scrollbackSize)
         // The oldest surviving line should NOT be "AA"
-        val firstLineChars = String(CharArray(2) { buf.scrollback[0][it].char })
+        val firstLineChars = String(CharArray(2) { buffer.scrollback[0][it].char })
         assertNotEquals("AA", firstLineChars)
     }
 
     @Test fun `scrollback preserves cell attributes`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.setAttributes(foreground = Colour.RED)
-        buf.writeText("ABCDEF")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.writeText("ABCDEF")
         val expected = CellAttributes(foreground = Colour.RED)
-        assertEquals(expected, buf.scrollback[0][0].attributes)
+        assertEquals(expected, buffer.scrollback[0][0].attributes)
     }
 }
 
@@ -545,41 +545,41 @@ class ScrollbackTest {
 class ClearScreenTest {
 
     @Test fun `clear screen resets all cells to blank`() {
-        val buf = TerminalBuffer(4, 3)
-        buf.writeText("Hello World!")
-        buf.clearScreen()
+        val buffer = TerminalBuffer(4, 3)
+        buffer.writeText("Hello World!")
+        buffer.clearScreen()
         for (row in 0 until 3) {
             for (col in 0 until 4) {
-                assertEquals(' ', buf.screen[row][col].char)
-                assertEquals(CellAttributes(), buf.screen[row][col].attributes)
+                assertEquals(' ', buffer.screen[row][col].char)
+                assertEquals(CellAttributes(), buffer.screen[row][col].attributes)
             }
         }
     }
 
     @Test fun `clear screen moves cursor to origin`() {
-        val buf = TerminalBuffer(10, 5)
-        buf.setCursor(5, 3)
-        buf.clearScreen()
-        assertEquals(0, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 5)
+        buffer.setCursor(5, 3)
+        buffer.clearScreen()
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
     }
 
     @Test fun `clear screen does not affect scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEF")
-        assertEquals(1, buf.scrollbackSize)
-        buf.clearScreen()
-        assertEquals(1, buf.scrollbackSize)
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEF")
+        assertEquals(1, buffer.scrollbackSize)
+        buffer.clearScreen()
+        assertEquals(1, buffer.scrollbackSize)
     }
 
     @Test fun `clear all resets screen and drops scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEF")
-        buf.clearAll()
-        assertEquals(0, buf.scrollbackSize)
-        assertEquals(0, buf.cursorCol)
-        assertEquals(0, buf.cursorRow)
-        assertEquals(' ', buf.screen[0][0].char)
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEF")
+        buffer.clearAll()
+        assertEquals(0, buffer.scrollbackSize)
+        assertEquals(0, buffer.cursorCol)
+        assertEquals(0, buffer.cursorRow)
+        assertEquals(' ', buffer.screen[0][0].char)
     }
 }
 
@@ -591,97 +591,97 @@ class ClearScreenTest {
 class ContentAccessTest {
 
     @Test fun `getChar from screen`() {
-        val buf = TerminalBuffer(4, 2)
-        buf.writeText("ABCD")
-        assertEquals('A', buf.getChar(0, 0))
-        assertEquals('D', buf.getChar(3, 0))
+        val buffer = TerminalBuffer(4, 2)
+        buffer.writeText("ABCD")
+        assertEquals('A', buffer.getChar(0, 0))
+        assertEquals('D', buffer.getChar(3, 0))
     }
 
     @Test fun `getChar from scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEF")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEF")
         // Scrollback row 0 = "ABC", screen row 0 (unified row 1) = "DEF"
-        assertEquals('A', buf.getChar(0, 0))
-        assertEquals('C', buf.getChar(2, 0))
-        assertEquals('D', buf.getChar(0, 1))
+        assertEquals('A', buffer.getChar(0, 0))
+        assertEquals('C', buffer.getChar(2, 0))
+        assertEquals('D', buffer.getChar(0, 1))
     }
 
     @Test fun `getChar out of bounds returns space`() {
-        val buf = TerminalBuffer(4, 2)
-        assertEquals(' ', buf.getChar(-1, 0))
-        assertEquals(' ', buf.getChar(4, 0))
-        assertEquals(' ', buf.getChar(0, -1))
-        assertEquals(' ', buf.getChar(0, 2))
+        val buffer = TerminalBuffer(4, 2)
+        assertEquals(' ', buffer.getChar(-1, 0))
+        assertEquals(' ', buffer.getChar(4, 0))
+        assertEquals(' ', buffer.getChar(0, -1))
+        assertEquals(' ', buffer.getChar(0, 2))
     }
 
     @Test fun `getAttributes from screen`() {
-        val buf = TerminalBuffer(4, 2)
-        buf.setAttributes(foreground = Colour.RED)
-        buf.writeText("A")
-        assertEquals(CellAttributes(foreground = Colour.RED), buf.getAttributes(0, 0))
-        assertEquals(CellAttributes(), buf.getAttributes(1, 0))
+        val buffer = TerminalBuffer(4, 2)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.writeText("A")
+        assertEquals(CellAttributes(foreground = Colour.RED), buffer.getAttributes(0, 0))
+        assertEquals(CellAttributes(), buffer.getAttributes(1, 0))
     }
 
     @Test fun `getAttributes from scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.setAttributes(foreground = Colour.GREEN)
-        buf.writeText("ABCDEF")
-        assertEquals(CellAttributes(foreground = Colour.GREEN), buf.getAttributes(0, 0))
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.setAttributes(foreground = Colour.GREEN)
+        buffer.writeText("ABCDEF")
+        assertEquals(CellAttributes(foreground = Colour.GREEN), buffer.getAttributes(0, 0))
     }
 
     @Test fun `getAttributes out of bounds returns default`() {
-        val buf = TerminalBuffer(4, 2)
-        assertEquals(CellAttributes(), buf.getAttributes(99, 99))
+        val buffer = TerminalBuffer(4, 2)
+        assertEquals(CellAttributes(), buffer.getAttributes(99, 99))
     }
 
     @Test fun `getLine from screen`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.writeText("Hello")
-        assertEquals("Hello", buf.getLine(0))
+        val buffer = TerminalBuffer(5, 2)
+        buffer.writeText("Hello")
+        assertEquals("Hello", buffer.getLine(0))
     }
 
     @Test fun `getLine from scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEF")
-        assertEquals("ABC", buf.getLine(0))
-        assertEquals("DEF", buf.getLine(1))
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEF")
+        assertEquals("ABC", buffer.getLine(0))
+        assertEquals("DEF", buffer.getLine(1))
     }
 
     @Test fun `getLine pads with spaces for partial content`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.writeText("Hi")
-        assertEquals("Hi   ", buf.getLine(0))
+        val buffer = TerminalBuffer(5, 2)
+        buffer.writeText("Hi")
+        assertEquals("Hi   ", buffer.getLine(0))
     }
 
     @Test fun `getLine out of bounds returns empty string`() {
-        val buf = TerminalBuffer(4, 2)
-        assertEquals("", buf.getLine(-1))
-        assertEquals("", buf.getLine(99))
+        val buffer = TerminalBuffer(4, 2)
+        assertEquals("", buffer.getLine(-1))
+        assertEquals("", buffer.getLine(99))
     }
 
     @Test fun `getScreenContent returns all screen lines`() {
-        val buf = TerminalBuffer(3, 3)
-        buf.writeText("ABCDEF")
-        assertEquals("ABC\nDEF\n   ", buf.getScreenContent())
+        val buffer = TerminalBuffer(3, 3)
+        buffer.writeText("ABCDEF")
+        assertEquals("ABC\nDEF\n   ", buffer.getScreenContent())
     }
 
     @Test fun `getScreenContent trims nothing`() {
-        val buf = TerminalBuffer(4, 2)
-        buf.writeText("Hi")
-        assertEquals("Hi  \n    ", buf.getScreenContent())
+        val buffer = TerminalBuffer(4, 2)
+        buffer.writeText("Hi")
+        assertEquals("Hi  \n    ", buffer.getScreenContent())
     }
 
     @Test fun `getAllContent includes scrollback and screen`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEFGHI")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEFGHI")
         // Scrollback: "ABC", "DEF"; Screen: "GHI", "   "
-        assertEquals("ABC\nDEF\nGHI\n   ", buf.getAllContent())
+        assertEquals("ABC\nDEF\nGHI\n   ", buffer.getAllContent())
     }
 
     @Test fun `getAllContent with no scrollback equals getScreenContent`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("ABC")
-        assertEquals(buf.getScreenContent(), buf.getAllContent())
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("ABC")
+        assertEquals(buffer.getScreenContent(), buffer.getAllContent())
     }
 }
 
@@ -693,85 +693,85 @@ class ContentAccessTest {
 class WideCharTest {
 
     @Test fun `wide char occupies two cells`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("中")
-        assertEquals('中', buf.screen[0][0].char)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("中")
+        assertEquals('中', buffer.screen[0][0].char)
         // Right half is a continuation marker, not a printable character
-        assertNotEquals('中', buf.screen[0][1].char)
-        assertEquals(' ', buf.screen[0][2].char)
+        assertNotEquals('中', buffer.screen[0][1].char)
+        assertEquals(' ', buffer.screen[0][2].char)
     }
 
     @Test fun `cursor advances by two for wide char`() {
-        val buf = TerminalBuffer(10, 2)
-        buf.writeText("中")
-        assertEquals(2, buf.cursorCol)
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("中")
+        assertEquals(2, buffer.cursorCol)
     }
 
     @Test fun `narrow and wide chars mixed`() {
-        val buf = TerminalBuffer(10, 2)
-        buf.writeText("A中B")
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('中', buf.screen[0][1].char)
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("A中B")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('中', buffer.screen[0][1].char)
         // col 2 = continuation
-        assertEquals('B', buf.screen[0][3].char)
-        assertEquals(4, buf.cursorCol)
+        assertEquals('B', buffer.screen[0][3].char)
+        assertEquals(4, buffer.cursorCol)
     }
 
     @Test fun `wide char uses current attributes`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.setAttributes(foreground = Colour.RED)
-        buf.writeText("中")
+        val buffer = TerminalBuffer(6, 2)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.writeText("中")
         val expected = CellAttributes(foreground = Colour.RED)
-        assertEquals(expected, buf.screen[0][0].attributes)
-        assertEquals(expected, buf.screen[0][1].attributes)
+        assertEquals(expected, buffer.screen[0][0].attributes)
+        assertEquals(expected, buffer.screen[0][1].attributes)
     }
 
     @Test fun `wide char at last column wraps to next line`() {
-        val buf = TerminalBuffer(5, 3)
-        buf.setCursor(4, 0)
-        buf.writeText("中")
+        val buffer = TerminalBuffer(5, 3)
+        buffer.setCursor(4, 0)
+        buffer.writeText("中")
         // Doesn't fit at col 4 (needs 2 cells, only 1 left) → wraps
-        assertEquals(' ', buf.screen[0][4].char)
-        assertEquals('中', buf.screen[1][0].char)
-        assertEquals(2, buf.cursorCol)
-        assertEquals(1, buf.cursorRow)
+        assertEquals(' ', buffer.screen[0][4].char)
+        assertEquals('中', buffer.screen[1][0].char)
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
     }
 
     @Test fun `overwrite left half of wide char clears right half`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("中")
-        buf.setCursor(0, 0)
-        buf.writeText("X")
-        assertEquals('X', buf.screen[0][0].char)
-        assertEquals(' ', buf.screen[0][1].char)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("中")
+        buffer.setCursor(0, 0)
+        buffer.writeText("X")
+        assertEquals('X', buffer.screen[0][0].char)
+        assertEquals(' ', buffer.screen[0][1].char)
     }
 
     @Test fun `overwrite right half of wide char clears left half`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("中")
-        buf.setCursor(1, 0)
-        buf.writeText("X")
-        assertEquals(' ', buf.screen[0][0].char)
-        assertEquals('X', buf.screen[0][1].char)
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("中")
+        buffer.setCursor(1, 0)
+        buffer.writeText("X")
+        assertEquals(' ', buffer.screen[0][0].char)
+        assertEquals('X', buffer.screen[0][1].char)
     }
 
     @Test fun `getLine includes wide chars without continuation markers`() {
-        val buf = TerminalBuffer(6, 2)
-        buf.writeText("A中B")
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("A中B")
         // "A中B" occupies 4 cells + 2 blank = "A中B  " (5 kotlin chars)
-        val line = buf.getLine(buf.scrollbackSize)
+        val line = buffer.getLine(buffer.scrollbackSize)
         assertTrue(line.contains("A"))
         assertTrue(line.contains("中"))
         assertTrue(line.contains("B"))
     }
 
     @Test fun `multiple wide chars in a row`() {
-        val buf = TerminalBuffer(8, 2)
-        buf.writeText("中文字")
-        assertEquals('中', buf.screen[0][0].char)
-        assertEquals('文', buf.screen[0][2].char)
-        assertEquals('字', buf.screen[0][4].char)
-        assertEquals(6, buf.cursorCol)
+        val buffer = TerminalBuffer(8, 2)
+        buffer.writeText("中文字")
+        assertEquals('中', buffer.screen[0][0].char)
+        assertEquals('文', buffer.screen[0][2].char)
+        assertEquals('字', buffer.screen[0][4].char)
+        assertEquals(6, buffer.cursorCol)
     }
 }
 
@@ -780,93 +780,93 @@ class WideCharTest {
 class ResizeTest {
 
     @Test fun `resize updates dimensions`() {
-        val buf = TerminalBuffer(10, 5)
-        buf.resize(20, 10)
-        assertEquals(20, buf.width)
-        assertEquals(10, buf.height)
+        val buffer = TerminalBuffer(10, 5)
+        buffer.resize(20, 10)
+        assertEquals(20, buffer.width)
+        assertEquals(10, buffer.height)
     }
 
     @Test fun `grow width pads lines with blanks`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("AB")
-        buf.resize(5, 2)
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals(' ', buf.screen[0][2].char)
-        assertEquals(' ', buf.screen[0][3].char)
-        assertEquals(' ', buf.screen[0][4].char)
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("AB")
+        buffer.resize(5, 2)
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals(' ', buffer.screen[0][2].char)
+        assertEquals(' ', buffer.screen[0][3].char)
+        assertEquals(' ', buffer.screen[0][4].char)
     }
 
     @Test fun `shrink width truncates lines`() {
-        val buf = TerminalBuffer(5, 2)
-        buf.writeText("ABCDE")
-        buf.resize(3, 2)
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('B', buf.screen[0][1].char)
-        assertEquals('C', buf.screen[0][2].char)
+        val buffer = TerminalBuffer(5, 2)
+        buffer.writeText("ABCDE")
+        buffer.resize(3, 2)
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('B', buffer.screen[0][1].char)
+        assertEquals('C', buffer.screen[0][2].char)
     }
 
     @Test fun `shrink height moves excess top rows to scrollback`() {
-        val buf = TerminalBuffer(3, 4)
-        buf.writeText("ABC")
-        buf.setCursor(0, 1)
-        buf.writeText("DEF")
-        buf.setCursor(0, 2)
-        buf.writeText("GHI")
-        buf.setCursor(0, 3)
-        buf.writeText("JK")
-        buf.resize(3, 2)
+        val buffer = TerminalBuffer(3, 4)
+        buffer.writeText("ABC")
+        buffer.setCursor(0, 1)
+        buffer.writeText("DEF")
+        buffer.setCursor(0, 2)
+        buffer.writeText("GHI")
+        buffer.setCursor(0, 3)
+        buffer.writeText("JK")
+        buffer.resize(3, 2)
         // Top 2 rows ("ABC", "DEF") move to scrollback; screen keeps "GHI", "JK_"
-        assertEquals(2, buf.scrollbackSize)
-        assertEquals('A', buf.scrollback[0][0].char)
-        assertEquals('D', buf.scrollback[1][0].char)
-        assertEquals('G', buf.screen[0][0].char)
-        assertEquals('J', buf.screen[1][0].char)
+        assertEquals(2, buffer.scrollbackSize)
+        assertEquals('A', buffer.scrollback[0][0].char)
+        assertEquals('D', buffer.scrollback[1][0].char)
+        assertEquals('G', buffer.screen[0][0].char)
+        assertEquals('J', buffer.screen[1][0].char)
     }
 
     @Test fun `grow height pulls lines from scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
-        buf.writeText("ABCDEFGHI")
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 10)
+        buffer.writeText("ABCDEFGHI")
         // Scrollback: "ABC", "DEF"; Screen: "GHI", "   "
-        buf.resize(3, 4)
+        buffer.resize(3, 4)
         // Pull 2 lines from scrollback into the top of the screen
-        assertEquals(0, buf.scrollbackSize)
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals('D', buf.screen[1][0].char)
-        assertEquals('G', buf.screen[2][0].char)
+        assertEquals(0, buffer.scrollbackSize)
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals('D', buffer.screen[1][0].char)
+        assertEquals('G', buffer.screen[2][0].char)
     }
 
     @Test fun `grow height adds blank rows when no scrollback`() {
-        val buf = TerminalBuffer(3, 2)
-        buf.writeText("ABC")
-        buf.resize(3, 4)
-        assertEquals('A', buf.screen[0][0].char)
-        assertEquals(' ', buf.screen[2][0].char)
-        assertEquals(' ', buf.screen[3][0].char)
+        val buffer = TerminalBuffer(3, 2)
+        buffer.writeText("ABC")
+        buffer.resize(3, 4)
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals(' ', buffer.screen[2][0].char)
+        assertEquals(' ', buffer.screen[3][0].char)
     }
 
     @Test fun `cursor clamped after shrink`() {
-        val buf = TerminalBuffer(10, 10)
-        buf.setCursor(8, 7)
-        buf.resize(5, 4)
-        assertEquals(4, buf.cursorCol)
-        assertEquals(3, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 10)
+        buffer.setCursor(8, 7)
+        buffer.resize(5, 4)
+        assertEquals(4, buffer.cursorCol)
+        assertEquals(3, buffer.cursorRow)
     }
 
     @Test fun `cursor preserved when it still fits`() {
-        val buf = TerminalBuffer(10, 10)
-        buf.setCursor(3, 2)
-        buf.resize(20, 20)
-        assertEquals(3, buf.cursorCol)
-        assertEquals(2, buf.cursorRow)
+        val buffer = TerminalBuffer(10, 10)
+        buffer.setCursor(3, 2)
+        buffer.resize(20, 20)
+        assertEquals(3, buffer.cursorCol)
+        assertEquals(2, buffer.cursorRow)
     }
 
     @Test fun `resize to same dimensions is a no-op`() {
-        val buf = TerminalBuffer(5, 3)
-        buf.writeText("Hello")
-        buf.resize(5, 3)
-        assertEquals('H', buf.screen[0][0].char)
-        assertEquals(5, buf.width)
-        assertEquals(3, buf.height)
+        val buffer = TerminalBuffer(5, 3)
+        buffer.writeText("Hello")
+        buffer.resize(5, 3)
+        assertEquals('H', buffer.screen[0][0].char)
+        assertEquals(5, buffer.width)
+        assertEquals(3, buffer.height)
     }
 }

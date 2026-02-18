@@ -58,26 +58,26 @@ class CellAttributesTest {
     }
 
     @Test fun `custom foreground and background`() {
-        val attrs = CellAttributes(foreground = Colour.RED, background = Colour.BLUE)
-        assertEquals(Colour.RED, attrs.foreground)
-        assertEquals(Colour.BLUE, attrs.background)
+        val attributes = CellAttributes(foreground = Colour.RED, background = Colour.BLUE)
+        assertEquals(Colour.RED, attributes.foreground)
+        assertEquals(Colour.BLUE, attributes.background)
     }
 
     @Test fun `custom style flags`() {
-        val attrs = CellAttributes(styles = setOf(StyleFlag.BOLD, StyleFlag.ITALIC))
-        assertEquals(setOf(StyleFlag.BOLD, StyleFlag.ITALIC), attrs.styles)
+        val attributes = CellAttributes(styles = setOf(StyleFlag.BOLD, StyleFlag.ITALIC))
+        assertEquals(setOf(StyleFlag.BOLD, StyleFlag.ITALIC), attributes.styles)
     }
 
     @Test fun `equal when same values`() {
-        val a = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
-        val b = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
-        assertEquals(a, b)
+        val first = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
+        val second = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
+        assertEquals(first, second)
     }
 
     @Test fun `not equal when different values`() {
-        val a = CellAttributes(foreground = Colour.RED)
-        val b = CellAttributes(foreground = Colour.GREEN)
-        assertNotEquals(a, b)
+        val first = CellAttributes(foreground = Colour.RED)
+        val second = CellAttributes(foreground = Colour.GREEN)
+        assertNotEquals(first, second)
     }
 }
 
@@ -94,16 +94,16 @@ class CellTest {
     }
 
     @Test fun `custom char and attributes`() {
-        val attrs = CellAttributes(foreground = Colour.GREEN, styles = setOf(StyleFlag.UNDERLINE))
-        val cell = Cell('X', attrs)
+        val cellAttributes = CellAttributes(foreground = Colour.GREEN, styles = setOf(StyleFlag.UNDERLINE))
+        val cell = Cell('X', cellAttributes)
         assertEquals('X', cell.char)
-        assertEquals(attrs, cell.attributes)
+        assertEquals(cellAttributes, cell.attributes)
     }
 
     @Test fun `equal when same values`() {
-        val a = Cell('A', CellAttributes(foreground = Colour.RED))
-        val b = Cell('A', CellAttributes(foreground = Colour.RED))
-        assertEquals(a, b)
+        val first = Cell('A', CellAttributes(foreground = Colour.RED))
+        val second = Cell('A', CellAttributes(foreground = Colour.RED))
+        assertEquals(first, second)
     }
 
     @Test fun `not equal when different char`() {

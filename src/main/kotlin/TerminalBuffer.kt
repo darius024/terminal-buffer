@@ -35,10 +35,10 @@ class TerminalBuffer(
         cursorRow = row.coerceIn(0, height - 1)
     }
 
-    fun moveCursorUp(n: Int)    { cursorRow = (cursorRow - n).coerceAtLeast(0) }
-    fun moveCursorDown(n: Int)  { cursorRow = (cursorRow + n).coerceAtMost(height - 1) }
-    fun moveCursorLeft(n: Int)  { cursorCol = (cursorCol - n).coerceAtLeast(0) }
-    fun moveCursorRight(n: Int) { cursorCol = (cursorCol + n).coerceAtMost(width - 1) }
+    fun moveCursorUp(steps: Int)    { cursorRow = (cursorRow - steps).coerceAtLeast(0) }
+    fun moveCursorDown(steps: Int)  { cursorRow = (cursorRow + steps).coerceAtMost(height - 1) }
+    fun moveCursorLeft(steps: Int)  { cursorCol = (cursorCol - steps).coerceAtLeast(0) }
+    fun moveCursorRight(steps: Int) { cursorCol = (cursorCol + steps).coerceAtMost(width - 1) }
 
     // -- Attributes -----------------------------------------------------------
 
@@ -56,8 +56,8 @@ class TerminalBuffer(
     // -- Editing --------------------------------------------------------------
 
     fun writeText(text: String) {
-        for (ch in text) {
-            if (charDisplayWidth(ch) == 2) putWideChar(ch) else putNarrowChar(ch)
+        for (character in text) {
+            if (charDisplayWidth(character) == 2) putWideChar(character) else putNarrowChar(character)
         }
     }
 
@@ -79,8 +79,8 @@ class TerminalBuffer(
         cursorRow = resumeRow
     }
 
-    fun fillLine(ch: Char) {
-        val cell = Cell(ch, currentAttributes)
+    fun fillLine(character: Char) {
+        val cell = Cell(character, currentAttributes)
         for (col in 0 until width) screen[cursorRow][col] = cell
     }
 
@@ -122,7 +122,7 @@ class TerminalBuffer(
 
         screen = if (newHeight <= oldHeight) {
             val excess = oldHeight - newHeight
-            for (i in 0 until excess) pushToScrollback(oldScreen[i])
+            for (row in 0 until excess) pushToScrollback(oldScreen[row])
             Array(newHeight) { oldScreen[it + excess] }
         } else {
             val extra = newHeight - oldHeight
@@ -172,11 +172,11 @@ class TerminalBuffer(
     }
 
     private fun lineToString(line: Array<Cell>): String {
-        val sb = StringBuilder()
+        val builder = StringBuilder()
         for (cell in line) {
-            if (cell.char != CONTINUATION) sb.append(cell.char)
+            if (cell.char != CONTINUATION) builder.append(cell.char)
         }
-        return sb.toString()
+        return builder.toString()
     }
 
     private fun cellAt(col: Int, row: Int): Cell? {
@@ -195,14 +195,14 @@ class TerminalBuffer(
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
 
-    private fun putNarrowChar(ch: Char) {
+    private fun putNarrowChar(character: Char) {
         if (cursorRow >= height) scrollUp()
         clearPartialWideChar(cursorCol, cursorRow)
-        screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
+        screen[cursorRow][cursorCol] = Cell(character, currentAttributes)
         advanceCursor(1)
     }
 
-    private fun putWideChar(ch: Char) {
+    private fun putWideChar(character: Char) {
         if (cursorRow >= height) scrollUp()
         if (cursorCol == width - 1) {
             screen[cursorRow][cursorCol] = Cell()
@@ -211,7 +211,7 @@ class TerminalBuffer(
         }
         clearPartialWideChar(cursorCol, cursorRow)
         clearPartialWideChar(cursorCol + 1, cursorRow)
-        screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
+        screen[cursorRow][cursorCol] = Cell(character, currentAttributes)
         screen[cursorRow][cursorCol + 1] = Cell(CONTINUATION, currentAttributes)
         advanceCursor(2)
     }
@@ -223,8 +223,8 @@ class TerminalBuffer(
         advanceCursor(1)
     }
 
-    private fun advanceCursor(n: Int) {
-        cursorCol += n
+    private fun advanceCursor(steps: Int) {
+        cursorCol += steps
         if (cursorCol >= width) {
             cursorCol = 0
             cursorRow++
@@ -255,7 +255,7 @@ class TerminalBuffer(
 
     private fun scrollUp() {
         pushToScrollback(screen[0])
-        for (i in 1 until height) screen[i - 1] = screen[i]
+        for (row in 1 until height) screen[row - 1] = screen[row]
         screen[height - 1] = blankLine()
         cursorRow = cursorRow.coerceAtMost(height - 1)
     }
