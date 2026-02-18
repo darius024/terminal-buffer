@@ -549,3 +549,148 @@ class FillLineTest {
         assertEquals(1, buf.cursorRow)
     }
 }
+
+// -- Insert line --------------------------------------------------------------
+
+class InsertLineTest {
+
+    @Test fun `insert line adds blank row at bottom`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABCDEF")
+        buf.insertLine()
+        assertEquals(' ', buf.screen[1][0].char)
+        assertEquals(' ', buf.screen[1][1].char)
+        assertEquals(' ', buf.screen[1][2].char)
+    }
+
+    @Test fun `insert line shifts rows up`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABC")
+        buf.setCursor(0, 1)
+        buf.writeText("DEF")
+        buf.insertLine()
+        // Old row 1 ("DEF") becomes row 0, new blank row at row 1
+        assertEquals('D', buf.screen[0][0].char)
+        assertEquals('E', buf.screen[0][1].char)
+        assertEquals('F', buf.screen[0][2].char)
+        assertEquals(' ', buf.screen[1][0].char)
+    }
+
+    @Test fun `insert line does not move cursor`() {
+        val buf = TerminalBuffer(5, 3)
+        buf.setCursor(2, 1)
+        buf.insertLine()
+        assertEquals(2, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+}
+
+// -- Scrollback ---------------------------------------------------------------
+
+class ScrollbackTest {
+
+    @Test fun `scrollback starts empty`() {
+        val buf = TerminalBuffer(5, 3, maxScrollback = 10)
+        assertEquals(0, buf.scrollbackSize)
+    }
+
+    @Test fun `write auto-scroll pushes line to scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEF")
+        // "ABC" scrolled off the top into scrollback
+        assertEquals(1, buf.scrollbackSize)
+        assertEquals('A', buf.scrollback[0][0].char)
+        assertEquals('B', buf.scrollback[0][1].char)
+        assertEquals('C', buf.scrollback[0][2].char)
+    }
+
+    @Test fun `insert line pushes top row to scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABC")
+        buf.setCursor(0, 1)
+        buf.writeText("DEF")
+        buf.insertLine()
+        assertEquals(1, buf.scrollbackSize)
+        assertEquals('A', buf.scrollback[0][0].char)
+    }
+
+    @Test fun `multiple scrolls accumulate in scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 100)
+        buf.writeText("ABCDEFGHI")
+        // 3 full lines in 3×2: two scroll events
+        assertEquals(2, buf.scrollbackSize)
+        assertEquals('A', buf.scrollback[0][0].char)
+        assertEquals('D', buf.scrollback[1][0].char)
+    }
+
+    @Test fun `scrollback respects max size`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 2)
+        // Write 4 full lines → 2 scrolls → scrollback would have 2 entries
+        buf.writeText("ABCDEFGHIJKL")
+        // 4 lines, 2-row screen: 2 scrolls, but then 2 more scrolls = 4 total pushed
+        // With max 2: oldest are dropped
+        assertTrue(buf.scrollbackSize <= 2)
+    }
+
+    @Test fun `oldest scrollback lines are dropped when max exceeded`() {
+        val buf = TerminalBuffer(2, 2, maxScrollback = 2)
+        // Write 5 full lines: AABB CCDD EEFF GGHH IIJJ
+        buf.writeText("AABBCCDDEEFFGGHH")
+        // Many scrolls, only last 2 scrollback lines survive
+        assertEquals(2, buf.scrollbackSize)
+        // The oldest surviving line should NOT be "AA"
+        val firstLineChars = String(CharArray(2) { buf.scrollback[0][it].char })
+        assertNotEquals("AA", firstLineChars)
+    }
+
+    @Test fun `scrollback preserves cell attributes`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.setAttributes(foreground = Colour.RED)
+        buf.writeText("ABCDEF")
+        val expected = CellAttributes(foreground = Colour.RED)
+        assertEquals(expected, buf.scrollback[0][0].attributes)
+    }
+}
+
+// -- Clear screen -------------------------------------------------------------
+
+class ClearScreenTest {
+
+    @Test fun `clear screen resets all cells to blank`() {
+        val buf = TerminalBuffer(4, 3)
+        buf.writeText("Hello World!")
+        buf.clearScreen()
+        for (row in 0 until 3) {
+            for (col in 0 until 4) {
+                assertEquals(' ', buf.screen[row][col].char)
+                assertEquals(CellAttributes(), buf.screen[row][col].attributes)
+            }
+        }
+    }
+
+    @Test fun `clear screen moves cursor to origin`() {
+        val buf = TerminalBuffer(10, 5)
+        buf.setCursor(5, 3)
+        buf.clearScreen()
+        assertEquals(0, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+    }
+
+    @Test fun `clear screen does not affect scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEF")
+        assertEquals(1, buf.scrollbackSize)
+        buf.clearScreen()
+        assertEquals(1, buf.scrollbackSize)
+    }
+
+    @Test fun `clear all resets screen and drops scrollback`() {
+        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        buf.writeText("ABCDEF")
+        buf.clearAll()
+        assertEquals(0, buf.scrollbackSize)
+        assertEquals(0, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+        assertEquals(' ', buf.screen[0][0].char)
+    }
+}

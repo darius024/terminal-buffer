@@ -93,6 +93,20 @@ class TerminalBuffer(
         for (col in 0 until width) screen[cursorRow][col] = cell
     }
 
+    // -- Line operations ------------------------------------------------------
+
+    fun insertLine() {}
+
+    fun clearScreen() {}
+
+    fun clearAll() {}
+
+    // -- Scrollback -----------------------------------------------------------
+
+    val scrollback: ArrayDeque<Array<Cell>> = ArrayDeque()
+
+    val scrollbackSize: Int get() = scrollback.size
+
     // -- Internal helpers -----------------------------------------------------
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
