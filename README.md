@@ -39,14 +39,14 @@ The implementation is split into two source files:
 - **`CellModel.kt`** — the immutable data model. Defines `Colour` (17 standard
   ANSI values), `StyleFlag` (bold, italic, underline), `CellAttributes`
   (foreground + background + styles) and `Cell` (a character with its
-  attributes). Also provides `charDisplayWidth` for wide-character detection.
+  attributes). Also provides `codePointDisplayWidth` for wide-character detection.
 - **`TerminalBuffer.kt`** — the mutable buffer itself: screen grid, scrollback
   history, cursor, attribute state, and all editing / access operations.
 
 ### Data model
 
-Every position in the grid is a `Cell`: an immutable data class holding a `Char`
-and a `CellAttributes`. The screen is a `Array<Array<Cell>>` — a row-major grid
+Every position in the grid is a `Cell`: an immutable data class holding a Unicode
+code point (`Int`) and a `CellAttributes`. The screen is a `Array<Array<Cell>>` — a row-major grid
 where each row is a fixed-width array. Scrollback is an `ArrayDeque<Array<Cell>>`
 acting as a bounded FIFO queue.
 
@@ -91,11 +91,14 @@ inserted text.
 
 ### Wide character handling
 
-Characters with a display width of 2 (CJK ideographs, fullwidth punctuation)
-occupy two adjacent cells. The left cell stores the actual character; the right
-cell stores a `'\u0000'` continuation marker. When a wide character would land
-on the last column (only one cell available), that column is blanked and the
-character wraps to the start of the next line.
+Characters with a display width of 2 (CJK ideographs, fullwidth punctuation,
+emoji) occupy two adjacent cells. The left cell stores the actual code point;
+the right cell stores a code-point-0 continuation marker. Text iteration
+operates on Unicode code points (via `String.codePointAt`) rather than `Char`
+values, so supplementary-plane characters such as emoji (e.g. U+1F600) are
+correctly detected as wide and stored in a single cell. When a wide character
+would land on the last column (only one cell available), that column is blanked
+and the character wraps to the start of the next line.
 
 Overwriting either half of a wide character clears the other half to a space,
 preventing orphaned continuation markers or headless wide characters.
@@ -151,10 +154,10 @@ no observable benefit.
 
 ### Continuation marker for wide characters
 
-Wide characters use a `'\u0000'` sentinel in the right-hand cell rather than a
+Wide characters use a code-point-0 sentinel in the right-hand cell rather than a
 separate `isWide` / `isContinuation` boolean on `Cell`. This avoids enlarging
 every cell by one field (which would affect all cells, not just the rare wide
-ones) at the cost of reserving a character value. Since U+0000 (NUL) never
+ones) at the cost of reserving a code point value. Since U+0000 (NUL) never
 appears as printable terminal output, this is a safe trade-off.
 
 ### Operation complexity
@@ -210,10 +213,6 @@ production implementation would benefit from several additions:
 
 ### Known limitations
 
-- `charDisplayWidth` covers the BMP (Basic Multilingual Plane) only. Emoji
-  outside the BMP (encoded as surrogate pairs in Kotlin's `Char`) are not
-  detected as wide. Full support would require operating on code points rather
-  than `Char` values.
 - `insertText` only shifts content within a single line before wrapping. It does
   not push characters into subsequent lines the way a full-screen text editor
   would.

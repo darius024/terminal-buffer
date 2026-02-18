@@ -56,8 +56,11 @@ class TerminalBuffer(
     // -- Editing --------------------------------------------------------------
 
     fun writeText(text: String) {
-        for (character in text) {
-            if (charDisplayWidth(character) == 2) putWideChar(character) else putNarrowChar(character)
+        var i = 0
+        while (i < text.length) {
+            val codePoint = text.codePointAt(i)
+            if (codePointDisplayWidth(codePoint) == 2) putWideChar(codePoint) else putNarrowChar(codePoint)
+            i += Character.charCount(codePoint)
         }
     }
 
@@ -80,7 +83,7 @@ class TerminalBuffer(
     }
 
     fun fillLine(character: Char) {
-        val cell = Cell(character, currentAttributes)
+        val cell = Cell(character.code, currentAttributes)
         for (col in 0 until width) screen[cursorRow][col] = cell
     }
 
@@ -151,6 +154,8 @@ class TerminalBuffer(
 
     fun getChar(col: Int, row: Int): Char = cellAt(col, row)?.char ?: ' '
 
+    fun getCodePoint(col: Int, row: Int): Int = cellAt(col, row)?.codePoint ?: ' '.code
+
     fun getAttributes(col: Int, row: Int): CellAttributes =
         cellAt(col, row)?.attributes ?: CellAttributes()
 
@@ -170,13 +175,13 @@ class TerminalBuffer(
     // -- Internal helpers -----------------------------------------------------
 
     companion object {
-        const val CONTINUATION = '\u0000'
+        const val CONTINUATION = 0
     }
 
     private fun lineToString(line: Array<Cell>): String {
         val builder = StringBuilder()
         for (cell in line) {
-            if (cell.char != CONTINUATION) builder.append(cell.char)
+            if (cell.codePoint != CONTINUATION) builder.appendCodePoint(cell.codePoint)
         }
         return builder.toString()
     }
@@ -197,14 +202,14 @@ class TerminalBuffer(
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
 
-    private fun putNarrowChar(character: Char) {
+    private fun putNarrowChar(codePoint: Int) {
         if (cursorRow >= height) scrollUp()
         clearPartialWideChar(cursorCol, cursorRow)
-        screen[cursorRow][cursorCol] = Cell(character, currentAttributes)
+        screen[cursorRow][cursorCol] = Cell(codePoint, currentAttributes)
         advanceCursor(1)
     }
 
-    private fun putWideChar(character: Char) {
+    private fun putWideChar(codePoint: Int) {
         if (cursorRow >= height) scrollUp()
         if (cursorCol == width - 1) {
             screen[cursorRow][cursorCol] = Cell()
@@ -213,7 +218,7 @@ class TerminalBuffer(
         }
         clearPartialWideChar(cursorCol, cursorRow)
         clearPartialWideChar(cursorCol + 1, cursorRow)
-        screen[cursorRow][cursorCol] = Cell(character, currentAttributes)
+        screen[cursorRow][cursorCol] = Cell(codePoint, currentAttributes)
         screen[cursorRow][cursorCol + 1] = Cell(CONTINUATION, currentAttributes)
         advanceCursor(2)
     }
@@ -238,9 +243,9 @@ class TerminalBuffer(
     private fun clearPartialWideChar(col: Int, row: Int) {
         if (col < 0 || col >= width || row < 0 || row >= height) return
         val cell = screen[row][col]
-        if (cell.char == CONTINUATION && col > 0) {
+        if (cell.codePoint == CONTINUATION && col > 0) {
             screen[row][col - 1] = Cell()
-        } else if (charDisplayWidth(cell.char) == 2 && col + 1 < width) {
+        } else if (codePointDisplayWidth(cell.codePoint) == 2 && col + 1 < width) {
             screen[row][col + 1] = Cell()
         }
     }

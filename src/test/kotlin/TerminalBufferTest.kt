@@ -800,6 +800,64 @@ class WideCharTest {
         assertEquals('字', buffer.screen[0][4].char)
         assertEquals(6, buffer.cursorCol)
     }
+
+    @Test fun `supplementary emoji occupies two cells`() {
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("\uD83D\uDE00") // 😀 U+1F600
+        assertEquals(0x1F600, buffer.screen[0][0].codePoint)
+        assertEquals(TerminalBuffer.CONTINUATION, buffer.screen[0][1].codePoint)
+        assertEquals(' '.code, buffer.screen[0][2].codePoint)
+    }
+
+    @Test fun `cursor advances by two for supplementary emoji`() {
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("\uD83D\uDE00")
+        assertEquals(2, buffer.cursorCol)
+    }
+
+    @Test fun `supplementary emoji uses current attributes`() {
+        val buffer = TerminalBuffer(6, 2)
+        buffer.setAttributes(foreground = Colour.RED)
+        buffer.writeText("\uD83D\uDE00")
+        val expected = CellAttributes(foreground = Colour.RED)
+        assertEquals(expected, buffer.screen[0][0].attributes)
+        assertEquals(expected, buffer.screen[0][1].attributes)
+    }
+
+    @Test fun `narrow and supplementary emoji mixed`() {
+        val buffer = TerminalBuffer(10, 2)
+        buffer.writeText("A\uD83D\uDE00B")
+        assertEquals('A', buffer.screen[0][0].char)
+        assertEquals(0x1F600, buffer.screen[0][1].codePoint)
+        assertEquals(TerminalBuffer.CONTINUATION, buffer.screen[0][2].codePoint)
+        assertEquals('B', buffer.screen[0][3].char)
+        assertEquals(4, buffer.cursorCol)
+    }
+
+    @Test fun `getCodePoint returns supplementary code point`() {
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("\uD83D\uDE00")
+        assertEquals(0x1F600, buffer.getCodePoint(0, buffer.scrollbackSize))
+    }
+
+    @Test fun `getLine includes supplementary emoji`() {
+        val buffer = TerminalBuffer(6, 2)
+        buffer.writeText("A\uD83D\uDE00B")
+        val line = buffer.getLine(buffer.scrollbackSize)
+        assertTrue(line.contains("A"))
+        assertTrue(line.contains("\uD83D\uDE00"))
+        assertTrue(line.contains("B"))
+    }
+
+    @Test fun `supplementary emoji at last column wraps to next line`() {
+        val buffer = TerminalBuffer(5, 3)
+        buffer.setCursor(4, 0)
+        buffer.writeText("\uD83D\uDE00")
+        assertEquals(' ', buffer.screen[0][4].char)
+        assertEquals(0x1F600, buffer.screen[1][0].codePoint)
+        assertEquals(2, buffer.cursorCol)
+        assertEquals(1, buffer.cursorRow)
+    }
 }
 
 // -- Resize -------------------------------------------------------------------

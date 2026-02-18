@@ -95,25 +95,25 @@ class CellTest {
 
     @Test fun `custom char and attributes`() {
         val cellAttributes = CellAttributes(foreground = Colour.GREEN, styles = setOf(StyleFlag.UNDERLINE))
-        val cell = Cell('X', cellAttributes)
+        val cell = Cell('X'.code, cellAttributes)
         assertEquals('X', cell.char)
         assertEquals(cellAttributes, cell.attributes)
     }
 
     @Test fun `equal when same values`() {
-        val first = Cell('A', CellAttributes(foreground = Colour.RED))
-        val second = Cell('A', CellAttributes(foreground = Colour.RED))
+        val first = Cell('A'.code, CellAttributes(foreground = Colour.RED))
+        val second = Cell('A'.code, CellAttributes(foreground = Colour.RED))
         assertEquals(first, second)
     }
 
     @Test fun `not equal when different char`() {
-        assertNotEquals(Cell('A'), Cell('B'))
+        assertNotEquals(Cell('A'.code), Cell('B'.code))
     }
 
     @Test fun `not equal when different attributes`() {
         assertNotEquals(
-            Cell('A', CellAttributes(foreground = Colour.RED)),
-            Cell('A', CellAttributes(foreground = Colour.BLUE)),
+            Cell('A'.code, CellAttributes(foreground = Colour.RED)),
+            Cell('A'.code, CellAttributes(foreground = Colour.BLUE)),
         )
     }
 }

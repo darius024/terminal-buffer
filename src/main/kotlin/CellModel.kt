@@ -3,7 +3,8 @@
  *
  * Defines the types that describe a single character cell: its colour,
  * style flags, combined attributes and the cell itself. Also provides
- * a display-width function for wide (CJK / fullwidth) character detection.
+ * a display-width function for wide (CJK / fullwidth / emoji) detection
+ * that operates on Unicode code points to handle supplementary planes.
  */
 
 enum class Colour {
@@ -24,12 +25,15 @@ data class CellAttributes(
 )
 
 data class Cell(
-    val char: Char = ' ',
+    val codePoint: Int = ' '.code,
     val attributes: CellAttributes = CellAttributes(),
-)
+) {
+    /** BMP convenience accessor. For supplementary characters, use [codePoint]. */
+    val char: Char get() = codePoint.toChar()
+}
 
-/** Display width of a character: 2 for CJK / fullwidth, 1 otherwise. */
-fun charDisplayWidth(character: Char): Int = when (character.code) {
+/** Display width of a Unicode code point: 2 for CJK / fullwidth / emoji, 1 otherwise. */
+fun codePointDisplayWidth(codePoint: Int): Int = when (codePoint) {
     in 0x1100..0x115F,
     in 0x2E80..0x303F,
     in 0x3040..0x30FF,
@@ -42,6 +46,8 @@ fun charDisplayWidth(character: Char): Int = when (character.code) {
     in 0xF900..0xFAFF,
     in 0xFE30..0xFE4F,
     in 0xFF01..0xFF60,
-    in 0xFFE0..0xFFE6 -> 2
+    in 0xFFE0..0xFFE6,
+    in 0x1F000..0x1FAFF,
+    in 0x20000..0x3134F -> 2
     else -> 1
 }
