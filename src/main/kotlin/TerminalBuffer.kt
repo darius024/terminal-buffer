@@ -104,9 +104,11 @@ class TerminalBuffer(
 
     // -- Scrollback -----------------------------------------------------------
 
-    val scrollback: ArrayDeque<Array<Cell>> = ArrayDeque()
+    private val scrollback: ArrayDeque<Array<Cell>> = ArrayDeque()
 
     val scrollbackSize: Int get() = scrollback.size
+
+    fun getScrollbackLine(index: Int): Array<Cell> = scrollback[index]
 
     // -- Resize ---------------------------------------------------------------
 

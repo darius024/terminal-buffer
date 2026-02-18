@@ -6,6 +6,7 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 // -- Buffer construction ------------------------------------------------------
@@ -32,6 +33,26 @@ class BufferConstructionTest {
                 assertEquals(CellAttributes(), buffer.screen[row][col].attributes)
             }
         }
+    }
+
+    @Test fun `zero width is rejected`() {
+        assertFailsWith<IllegalArgumentException> { TerminalBuffer(0, 24) }
+    }
+
+    @Test fun `negative width is rejected`() {
+        assertFailsWith<IllegalArgumentException> { TerminalBuffer(-1, 24) }
+    }
+
+    @Test fun `zero height is rejected`() {
+        assertFailsWith<IllegalArgumentException> { TerminalBuffer(80, 0) }
+    }
+
+    @Test fun `negative height is rejected`() {
+        assertFailsWith<IllegalArgumentException> { TerminalBuffer(80, -1) }
+    }
+
+    @Test fun `negative maxScrollback is rejected`() {
+        assertFailsWith<IllegalArgumentException> { TerminalBuffer(80, 24, maxScrollback = -1) }
     }
 }
 
@@ -487,9 +508,9 @@ class ScrollbackTest {
         buffer.writeText("ABCDEF")
         // "ABC" scrolled off the top into scrollback
         assertEquals(1, buffer.scrollbackSize)
-        assertEquals('A', buffer.scrollback[0][0].char)
-        assertEquals('B', buffer.scrollback[0][1].char)
-        assertEquals('C', buffer.scrollback[0][2].char)
+        assertEquals('A', buffer.getScrollbackLine(0)[0].char)
+        assertEquals('B', buffer.getScrollbackLine(0)[1].char)
+        assertEquals('C', buffer.getScrollbackLine(0)[2].char)
     }
 
     @Test fun `insert line pushes top row to scrollback`() {
@@ -499,7 +520,7 @@ class ScrollbackTest {
         buffer.writeText("DEF")
         buffer.insertLine()
         assertEquals(1, buffer.scrollbackSize)
-        assertEquals('A', buffer.scrollback[0][0].char)
+        assertEquals('A', buffer.getScrollbackLine(0)[0].char)
     }
 
     @Test fun `multiple scrolls accumulate in scrollback`() {
@@ -507,8 +528,8 @@ class ScrollbackTest {
         buffer.writeText("ABCDEFGHI")
         // 3 full lines in 3×2: two scroll events
         assertEquals(2, buffer.scrollbackSize)
-        assertEquals('A', buffer.scrollback[0][0].char)
-        assertEquals('D', buffer.scrollback[1][0].char)
+        assertEquals('A', buffer.getScrollbackLine(0)[0].char)
+        assertEquals('D', buffer.getScrollbackLine(1)[0].char)
     }
 
     @Test fun `scrollback respects max size`() {
@@ -527,7 +548,7 @@ class ScrollbackTest {
         // Many scrolls, only last 2 scrollback lines survive
         assertEquals(2, buffer.scrollbackSize)
         // The oldest surviving line should NOT be "AA"
-        val firstLineChars = String(CharArray(2) { buffer.scrollback[0][it].char })
+        val firstLineChars = String(CharArray(2) { buffer.getScrollbackLine(0)[it].char })
         assertNotEquals("AA", firstLineChars)
     }
 
@@ -536,7 +557,13 @@ class ScrollbackTest {
         buffer.setAttributes(foreground = Colour.RED)
         buffer.writeText("ABCDEF")
         val expected = CellAttributes(foreground = Colour.RED)
-        assertEquals(expected, buffer.scrollback[0][0].attributes)
+        assertEquals(expected, buffer.getScrollbackLine(0)[0].attributes)
+    }
+
+    @Test fun `maxScrollback zero keeps scrollback empty`() {
+        val buffer = TerminalBuffer(3, 2, maxScrollback = 0)
+        buffer.writeText("ABCDEF")
+        assertEquals(0, buffer.scrollbackSize)
     }
 }
 
@@ -818,8 +845,8 @@ class ResizeTest {
         buffer.resize(3, 2)
         // Top 2 rows ("ABC", "DEF") move to scrollback; screen keeps "GHI", "JK_"
         assertEquals(2, buffer.scrollbackSize)
-        assertEquals('A', buffer.scrollback[0][0].char)
-        assertEquals('D', buffer.scrollback[1][0].char)
+        assertEquals('A', buffer.getScrollbackLine(0)[0].char)
+        assertEquals('D', buffer.getScrollbackLine(1)[0].char)
         assertEquals('G', buffer.screen[0][0].char)
         assertEquals('J', buffer.screen[1][0].char)
     }

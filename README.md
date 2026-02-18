@@ -217,9 +217,6 @@ production implementation would benefit from several additions:
 - `insertText` only shifts content within a single line before wrapping. It does
   not push characters into subsequent lines the way a full-screen text editor
   would.
-- The scrollback is publicly accessible as an `ArrayDeque`. A stricter API would
-  expose it through read-only accessors only.
-
 ## Build
 
 Requires a JDK (21+) on the `PATH` or via `JAVA_HOME`.
