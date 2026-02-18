@@ -175,6 +175,51 @@ appears as printable terminal output, this is a safe trade-off.
 Scrollback push/eviction is amortised O(1) per line thanks to `ArrayDeque`.
 The overall memory footprint is O((maxScrollback + height) × width) cells.
 
+## Future improvements and limitations
+
+The buffer covers the core functionality a terminal emulator needs, but a
+production implementation would benefit from several additions:
+
+### Not yet implemented
+
+- **ANSI escape sequence parsing** — real terminal output is a stream of bytes
+  interleaved with CSI/OSC escape sequences (`\e[31m`, `\e[H`, etc.). A parser
+  layer above the buffer would decode these and translate them into `writeText`,
+  `setCursor`, `setAttributes` and similar calls.
+- **True colour (24-bit)** — the `Colour` enum models the classic 16 ANSI
+  colours. Supporting 256-colour and RGB would require replacing the enum with a
+  sealed class or an inline value class holding an RGB triple.
+- **Alternate screen buffer** — programs like `vim` and `less` switch to a
+  secondary screen buffer and restore the original on exit. This would require a
+  stack of screen states.
+- **Selection and copy** — tracking a rectangular or stream selection across
+  screen and scrollback, converting it to a string for clipboard use.
+- **Soft line wrapping metadata** — `resize` currently truncates or pads because
+  there is no record of which line breaks were caused by wrapping vs explicit
+  newlines. Storing a "wrapped" flag per row would allow re-flowing text on
+  width changes.
+- **Tab stops** — the buffer does not handle `\t`. A real terminal maintains a
+  set of tab-stop columns and advances the cursor to the next one.
+- **Sixel / image protocols** — modern terminals support inline images via Sixel
+  or the iTerm2 image protocol. This would require cells that can reference
+  image data rather than characters.
+- **Performance profiling** — for very large scrollback buffers (100k+ lines) or
+  extremely rapid output, the per-character `Cell` allocation could become a
+  bottleneck. A packed representation (parallel arrays of `CharArray` and
+  attribute arrays) would reduce GC pressure at the cost of API simplicity.
+
+### Known limitations
+
+- `charDisplayWidth` covers the BMP (Basic Multilingual Plane) only. Emoji
+  outside the BMP (encoded as surrogate pairs in Kotlin's `Char`) are not
+  detected as wide. Full support would require operating on code points rather
+  than `Char` values.
+- `insertText` only shifts content within a single line before wrapping. It does
+  not push characters into subsequent lines the way a full-screen text editor
+  would.
+- The scrollback is publicly accessible as an `ArrayDeque`. A stricter API would
+  expose it through read-only accessors only.
+
 ## Build
 
 Requires a JDK (21+) on the `PATH` or via `JAVA_HOME`.
