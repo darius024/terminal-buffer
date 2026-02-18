@@ -32,7 +32,9 @@ class TerminalBuffer(
     val height: Int,
     val maxScrollback: Int = 1000,
 ) {
-    val screen: Array<Array<Cell>> = Array(height) { Array(width) { Cell() } }
+    val screen: Array<Array<Cell>> = Array(height) { blankLine() }
+
+    private fun blankLine(): Array<Cell> = Array(width) { Cell() }
 
     var cursorCol: Int = 0
         private set

@@ -85,7 +85,40 @@ class CellAttributesTest {
     }
 }
 
-// -- Cell ---------------------------------------------------------------------
+class CellTest {
+
+    @Test fun `default char is space`() {
+        assertEquals(' ', Cell().char)
+    }
+
+    @Test fun `default attributes are default CellAttributes`() {
+        assertEquals(CellAttributes(), Cell().attributes)
+    }
+
+    @Test fun `custom char and attributes`() {
+        val attrs = CellAttributes(foreground = Colour.GREEN, styles = setOf(StyleFlag.UNDERLINE))
+        val cell = Cell('X', attrs)
+        assertEquals('X', cell.char)
+        assertEquals(attrs, cell.attributes)
+    }
+
+    @Test fun `equal when same values`() {
+        val a = Cell('A', CellAttributes(foreground = Colour.RED))
+        val b = Cell('A', CellAttributes(foreground = Colour.RED))
+        assertEquals(a, b)
+    }
+
+    @Test fun `not equal when different char`() {
+        assertNotEquals(Cell('A'), Cell('B'))
+    }
+
+    @Test fun `not equal when different attributes`() {
+        assertNotEquals(
+            Cell('A', CellAttributes(foreground = Colour.RED)),
+            Cell('A', CellAttributes(foreground = Colour.BLUE)),
+        )
+    }
+}
 
 // -- Buffer construction ------------------------------------------------------
 
@@ -228,42 +261,5 @@ class CursorMovementTest {
         buf.moveCursorDown(0)
         assertEquals(5, buf.cursorCol)
         assertEquals(10, buf.cursorRow)
-    }
-}
-
-// -- Cell ---------------------------------------------------------------------
-
-class CellTest {
-
-    @Test fun `default char is space`() {
-        assertEquals(' ', Cell().char)
-    }
-
-    @Test fun `default attributes are default CellAttributes`() {
-        assertEquals(CellAttributes(), Cell().attributes)
-    }
-
-    @Test fun `custom char and attributes`() {
-        val attrs = CellAttributes(foreground = Colour.GREEN, styles = setOf(StyleFlag.UNDERLINE))
-        val cell = Cell('X', attrs)
-        assertEquals('X', cell.char)
-        assertEquals(attrs, cell.attributes)
-    }
-
-    @Test fun `equal when same values`() {
-        val a = Cell('A', CellAttributes(foreground = Colour.RED))
-        val b = Cell('A', CellAttributes(foreground = Colour.RED))
-        assertEquals(a, b)
-    }
-
-    @Test fun `not equal when different char`() {
-        assertNotEquals(Cell('A'), Cell('B'))
-    }
-
-    @Test fun `not equal when different attributes`() {
-        assertNotEquals(
-            Cell('A', CellAttributes(foreground = Colour.RED)),
-            Cell('A', CellAttributes(foreground = Colour.BLUE)),
-        )
     }
 }
