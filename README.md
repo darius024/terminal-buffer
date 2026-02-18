@@ -115,6 +115,66 @@ This is a pragmatic trade-off: it does not attempt to re-flow wrapped lines
 (which would require tracking soft vs hard line breaks), but it preserves
 content as faithfully as possible.
 
+## Trade-offs and complexity
+
+### Why `Array` over `List`
+
+The screen grid uses `Array<Array<Cell>>` rather than `MutableList<MutableList<Cell>>`.
+Arrays give O(1) indexed access with no boxing overhead and match the fixed-width
+nature of a terminal line — every row always has exactly `width` cells. The
+downside is that resizing requires allocating a new array, but resize is an
+infrequent operation compared to character writes.
+
+### Why `ArrayDeque` for scrollback
+
+`ArrayDeque` gives amortised O(1) for both `addLast` (push new line) and
+`removeFirst` (evict oldest when the cap is reached). A `LinkedList` would also
+be O(1) for these operations but wastes memory on per-node object headers and
+pointers. `ArrayList` would be O(n) for `removeFirst` due to element shifting.
+
+### Why immutable `Cell`
+
+Each `Cell` is an immutable `data class`. Writing a character creates a new
+instance rather than mutating fields. This has a small allocation cost but
+eliminates an entire category of bugs: scrollback lines cannot be accidentally
+corrupted by later screen edits because they share no mutable state. Kotlin's
+data classes also give correct `equals` / `hashCode` for free, which simplifies
+testing.
+
+### Auto-scroll semantics
+
+When a write would place the cursor below the bottom row, the screen scrolls
+before the character is placed — not after. This means the freshly scrolled-in
+blank row is immediately available for writing. The alternative (scroll after
+placement) would require buffering the pending character, adding complexity for
+no observable benefit.
+
+### Continuation marker for wide characters
+
+Wide characters use a `'\u0000'` sentinel in the right-hand cell rather than a
+separate `isWide` / `isContinuation` boolean on `Cell`. This avoids enlarging
+every cell by one field (which would affect all cells, not just the rare wide
+ones) at the cost of reserving a character value. Since U+0000 (NUL) never
+appears as printable terminal output, this is a safe trade-off.
+
+### Operation complexity
+
+| Operation | Time | Space |
+|---|---|---|
+| `writeText(n chars)` | O(n) amortised — each char is O(1) plus occasional O(width) scroll | O(1) per char |
+| `insertText(n chars)` | O(n + width) — captures the tail, writes, replays | O(width) for the tail copy |
+| `fillLine` | O(width) | O(1) |
+| `insertLine` | O(height) — shifts all rows | O(width) for the new blank row |
+| `clearScreen` | O(height × width) | O(height × width) |
+| `getChar` / `getAttributes` | O(1) | O(1) |
+| `getLine` | O(width) | O(width) for the string |
+| `getScreenContent` | O(height × width) | O(height × width) |
+| `getAllContent` | O((scrollback + height) × width) | Same |
+| `resize` | O(height × width) | O(height × width) for the new grid |
+
+Scrollback push/eviction is amortised O(1) per line thanks to `ArrayDeque`.
+The overall memory footprint is O((maxScrollback + height) × width) cells.
+
 ## Build
 
 Requires a JDK (21+) on the `PATH` or via `JAVA_HOME`.
