@@ -87,6 +87,152 @@ class CellAttributesTest {
 
 // -- Cell ---------------------------------------------------------------------
 
+// -- Buffer construction ------------------------------------------------------
+
+class BufferConstructionTest {
+
+    @Test fun `stores configured dimensions`() {
+        val buf = TerminalBuffer(80, 24, maxScrollback = 1000)
+        assertEquals(80, buf.width)
+        assertEquals(24, buf.height)
+    }
+
+    @Test fun `cursor starts at origin`() {
+        val buf = TerminalBuffer(80, 24)
+        assertEquals(0, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+    }
+
+    @Test fun `screen is initially blank spaces`() {
+        val buf = TerminalBuffer(4, 3)
+        for (row in 0 until 3) {
+            for (col in 0 until 4) {
+                assertEquals(' ', buf.screen[row][col].char)
+                assertEquals(CellAttributes(), buf.screen[row][col].attributes)
+            }
+        }
+    }
+}
+
+// -- Cursor positioning -------------------------------------------------------
+
+class CursorPositionTest {
+
+    @Test fun `set cursor to valid position`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(10, 5)
+        assertEquals(10, buf.cursorCol)
+        assertEquals(5, buf.cursorRow)
+    }
+
+    @Test fun `set cursor clamps column to width minus one`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(100, 0)
+        assertEquals(79, buf.cursorCol)
+    }
+
+    @Test fun `set cursor clamps row to height minus one`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, 30)
+        assertEquals(23, buf.cursorRow)
+    }
+
+    @Test fun `set cursor clamps negative column to zero`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(-5, 0)
+        assertEquals(0, buf.cursorCol)
+    }
+
+    @Test fun `set cursor clamps negative row to zero`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, -3)
+        assertEquals(0, buf.cursorRow)
+    }
+}
+
+// -- Cursor movement ----------------------------------------------------------
+
+class CursorMovementTest {
+
+    @Test fun `move right by N`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, 0)
+        buf.moveCursorRight(5)
+        assertEquals(5, buf.cursorCol)
+    }
+
+    @Test fun `move right clamps at right edge`() {
+        val buf = TerminalBuffer(10, 5)
+        buf.setCursor(7, 0)
+        buf.moveCursorRight(20)
+        assertEquals(9, buf.cursorCol)
+    }
+
+    @Test fun `move left by N`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(10, 0)
+        buf.moveCursorLeft(3)
+        assertEquals(7, buf.cursorCol)
+    }
+
+    @Test fun `move left clamps at left edge`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(2, 0)
+        buf.moveCursorLeft(10)
+        assertEquals(0, buf.cursorCol)
+    }
+
+    @Test fun `move down by N`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, 0)
+        buf.moveCursorDown(5)
+        assertEquals(5, buf.cursorRow)
+    }
+
+    @Test fun `move down clamps at bottom edge`() {
+        val buf = TerminalBuffer(10, 5)
+        buf.setCursor(0, 3)
+        buf.moveCursorDown(20)
+        assertEquals(4, buf.cursorRow)
+    }
+
+    @Test fun `move up by N`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, 10)
+        buf.moveCursorUp(3)
+        assertEquals(7, buf.cursorRow)
+    }
+
+    @Test fun `move up clamps at top edge`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(0, 2)
+        buf.moveCursorUp(10)
+        assertEquals(0, buf.cursorRow)
+    }
+
+    @Test fun `move does not affect the other axis`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(5, 10)
+        buf.moveCursorRight(3)
+        assertEquals(10, buf.cursorRow)
+        buf.moveCursorDown(2)
+        assertEquals(8, buf.cursorCol)
+    }
+
+    @Test fun `move by zero is a no-op`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setCursor(5, 10)
+        buf.moveCursorRight(0)
+        buf.moveCursorLeft(0)
+        buf.moveCursorUp(0)
+        buf.moveCursorDown(0)
+        assertEquals(5, buf.cursorCol)
+        assertEquals(10, buf.cursorRow)
+    }
+}
+
+// -- Cell ---------------------------------------------------------------------
+
 class CellTest {
 
     @Test fun `default char is space`() {

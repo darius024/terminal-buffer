@@ -26,3 +26,26 @@ data class Cell(
     val char: Char = ' ',
     val attributes: CellAttributes = CellAttributes(),
 )
+
+class TerminalBuffer(
+    val width: Int,
+    val height: Int,
+    val maxScrollback: Int = 1000,
+) {
+    val screen: Array<Array<Cell>> = Array(height) { Array(width) { Cell() } }
+
+    var cursorCol: Int = 0
+        private set
+    var cursorRow: Int = 0
+        private set
+
+    fun setCursor(col: Int, row: Int) {
+        cursorCol = col
+        cursorRow = row
+    }
+
+    fun moveCursorUp(n: Int) {}
+    fun moveCursorDown(n: Int) {}
+    fun moveCursorLeft(n: Int) {}
+    fun moveCursorRight(n: Int) {}
+}
