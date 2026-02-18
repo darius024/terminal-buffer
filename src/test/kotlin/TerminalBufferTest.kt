@@ -796,3 +796,93 @@ class ContentAccessTest {
         assertEquals(buf.getScreenContent(), buf.getAllContent())
     }
 }
+
+// -- Wide characters ----------------------------------------------------------
+//
+// Characters like CJK ideographs occupy 2 terminal cells.
+// The left cell holds the character; the right cell is a continuation marker.
+
+class WideCharTest {
+
+    @Test fun `wide char occupies two cells`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("中")
+        assertEquals('中', buf.screen[0][0].char)
+        // Right half is a continuation marker, not a printable character
+        assertNotEquals('中', buf.screen[0][1].char)
+        assertEquals(' ', buf.screen[0][2].char)
+    }
+
+    @Test fun `cursor advances by two for wide char`() {
+        val buf = TerminalBuffer(10, 2)
+        buf.writeText("中")
+        assertEquals(2, buf.cursorCol)
+    }
+
+    @Test fun `narrow and wide chars mixed`() {
+        val buf = TerminalBuffer(10, 2)
+        buf.writeText("A中B")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('中', buf.screen[0][1].char)
+        // col 2 = continuation
+        assertEquals('B', buf.screen[0][3].char)
+        assertEquals(4, buf.cursorCol)
+    }
+
+    @Test fun `wide char uses current attributes`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.setAttributes(foreground = Colour.RED)
+        buf.writeText("中")
+        val expected = CellAttributes(foreground = Colour.RED)
+        assertEquals(expected, buf.screen[0][0].attributes)
+        assertEquals(expected, buf.screen[0][1].attributes)
+    }
+
+    @Test fun `wide char at last column wraps to next line`() {
+        val buf = TerminalBuffer(5, 3)
+        buf.setCursor(4, 0)
+        buf.writeText("中")
+        // Doesn't fit at col 4 (needs 2 cells, only 1 left) → wraps
+        assertEquals(' ', buf.screen[0][4].char)
+        assertEquals('中', buf.screen[1][0].char)
+        assertEquals(2, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+
+    @Test fun `overwrite left half of wide char clears right half`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("中")
+        buf.setCursor(0, 0)
+        buf.writeText("X")
+        assertEquals('X', buf.screen[0][0].char)
+        assertEquals(' ', buf.screen[0][1].char)
+    }
+
+    @Test fun `overwrite right half of wide char clears left half`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("中")
+        buf.setCursor(1, 0)
+        buf.writeText("X")
+        assertEquals(' ', buf.screen[0][0].char)
+        assertEquals('X', buf.screen[0][1].char)
+    }
+
+    @Test fun `getLine includes wide chars without continuation markers`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("A中B")
+        // "A中B" occupies 4 cells + 2 blank = "A中B  " (5 kotlin chars)
+        val line = buf.getLine(buf.scrollbackSize)
+        assertTrue(line.contains("A"))
+        assertTrue(line.contains("中"))
+        assertTrue(line.contains("B"))
+    }
+
+    @Test fun `multiple wide chars in a row`() {
+        val buf = TerminalBuffer(8, 2)
+        buf.writeText("中文字")
+        assertEquals('中', buf.screen[0][0].char)
+        assertEquals('文', buf.screen[0][2].char)
+        assertEquals('字', buf.screen[0][4].char)
+        assertEquals(6, buf.cursorCol)
+    }
+}
