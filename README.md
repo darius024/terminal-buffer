@@ -46,7 +46,7 @@ The implementation is split into two source files:
 ### Data model
 
 Every position in the grid is a `Cell`: an immutable data class holding a Unicode
-code point (`Int`) and a `CellAttributes`. The screen is a `Array<Array<Cell>>` — a row-major grid
+code point (`Int`) and a `CellAttributes`. The screen is an `Array<Array<Cell>>` — a row-major grid
 where each row is a fixed-width array. Scrollback is an `ArrayDeque<Array<Cell>>`
 acting as a bounded FIFO queue.
 
@@ -92,13 +92,11 @@ inserted text.
 ### Wide character handling
 
 Characters with a display width of 2 (CJK ideographs, fullwidth punctuation,
-emoji) occupy two adjacent cells. The left cell stores the actual code point;
-the right cell stores a code-point-0 continuation marker. Text iteration
-operates on Unicode code points (via `String.codePointAt`) rather than `Char`
-values, so supplementary-plane characters such as emoji (e.g. U+1F600) are
-correctly detected as wide and stored in a single cell. When a wide character
-would land on the last column (only one cell available), that column is blanked
-and the character wraps to the start of the next line.
+emoji — including supplementary-plane characters like U+1F600) occupy two
+adjacent cells. The left cell stores the code point; the right cell stores a
+code-point-0 continuation marker. When a wide character would land on the last
+column (only one cell available), that column is blanked and the character wraps
+to the start of the next line.
 
 Overwriting either half of a wide character clears the other half to a space,
 preventing orphaned continuation markers or headless wide characters.
@@ -114,9 +112,8 @@ preventing orphaned continuation markers or headless wide characters.
   blank rows are appended.
 - **Cursor** — clamped to the new bounds after resizing.
 
-This is a pragmatic trade-off: it does not attempt to re-flow wrapped lines
-(which would require tracking soft vs hard line breaks), but it preserves
-content as faithfully as possible.
+This is a pragmatic trade-off: it does not attempt to re-flow wrapped lines,
+but it preserves content as faithfully as possible.
 
 ## Trade-offs and complexity
 
@@ -169,7 +166,7 @@ appears as printable terminal output, this is a safe trade-off.
 | `fillLine` | O(width) | O(1) |
 | `insertLine` | O(height) — shifts all rows | O(width) for the new blank row |
 | `clearScreen` | O(height × width) | O(height × width) |
-| `getChar` / `getAttributes` | O(1) | O(1) |
+| `getChar` / `getCodePoint` / `getAttributes` | O(1) | O(1) |
 | `getLine` | O(width) | O(width) for the string |
 | `getScreenContent` | O(height × width) | O(height × width) |
 | `getAllContent` | O((scrollback + height) × width) | Same |
@@ -178,44 +175,22 @@ appears as printable terminal output, this is a safe trade-off.
 Scrollback push/eviction is amortised O(1) per line thanks to `ArrayDeque`.
 The overall memory footprint is O((maxScrollback + height) × width) cells.
 
-## Future improvements and limitations
+## Future improvements
 
-The buffer covers the core functionality a terminal emulator needs, but a
-production implementation would benefit from several additions:
-
-### Not yet implemented
-
-- **ANSI escape sequence parsing** — real terminal output is a stream of bytes
-  interleaved with CSI/OSC escape sequences (`\e[31m`, `\e[H`, etc.). A parser
-  layer above the buffer would decode these and translate them into `writeText`,
-  `setCursor`, `setAttributes` and similar calls.
+- **ANSI escape sequence parsing** — a parser layer above the buffer would
+  decode CSI/OSC escape sequences (`\e[31m`, `\e[H`, etc.) and translate them
+  into `writeText`, `setCursor`, `setAttributes` and similar calls.
 - **True colour (24-bit)** — the `Colour` enum models the classic 16 ANSI
   colours. Supporting 256-colour and RGB would require replacing the enum with a
   sealed class or an inline value class holding an RGB triple.
 - **Alternate screen buffer** — programs like `vim` and `less` switch to a
   secondary screen buffer and restore the original on exit. This would require a
   stack of screen states.
-- **Selection and copy** — tracking a rectangular or stream selection across
-  screen and scrollback, converting it to a string for clipboard use.
 - **Soft line wrapping metadata** — `resize` currently truncates or pads because
   there is no record of which line breaks were caused by wrapping vs explicit
   newlines. Storing a "wrapped" flag per row would allow re-flowing text on
   width changes.
-- **Tab stops** — the buffer does not handle `\t`. A real terminal maintains a
-  set of tab-stop columns and advances the cursor to the next one.
-- **Sixel / image protocols** — modern terminals support inline images via Sixel
-  or the iTerm2 image protocol. This would require cells that can reference
-  image data rather than characters.
-- **Performance profiling** — for very large scrollback buffers (100k+ lines) or
-  extremely rapid output, the per-character `Cell` allocation could become a
-  bottleneck. A packed representation (parallel arrays of `CharArray` and
-  attribute arrays) would reduce GC pressure at the cost of API simplicity.
 
-### Known limitations
-
-- `insertText` only shifts content within a single line before wrapping. It does
-  not push characters into subsequent lines the way a full-screen text editor
-  would.
 ## Build
 
 Requires a JDK (21+) on the `PATH` or via `JAVA_HOME`.
