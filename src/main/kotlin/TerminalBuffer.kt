@@ -36,7 +36,8 @@ class TerminalBuffer(
         private set
     var height: Int = height
         private set
-    val screen: Array<Array<Cell>> = Array(height) { blankLine() }
+    var screen: Array<Array<Cell>> = Array(height) { blankLine() }
+        private set
 
     // -- Cursor ---------------------------------------------------------------
 
@@ -125,7 +126,43 @@ class TerminalBuffer(
 
     // -- Resize ---------------------------------------------------------------
 
-    fun resize(newWidth: Int, newHeight: Int) {}
+    fun resize(newWidth: Int, newHeight: Int) {
+        if (newWidth == width && newHeight == height) return
+
+        val oldScreen = screen.map { resizeLine(it, newWidth) }
+        val oldHeight = height
+        width = newWidth
+        height = newHeight
+
+        screen = if (newHeight <= oldHeight) {
+            val excess = oldHeight - newHeight
+            for (i in 0 until excess) {
+                scrollback.addLast(oldScreen[i])
+                if (scrollback.size > maxScrollback) scrollback.removeFirst()
+            }
+            Array(newHeight) { oldScreen[it + excess] }
+        } else {
+            val extra = newHeight - oldHeight
+            val fromScrollback = minOf(extra, scrollbackSize)
+            val pulled = ArrayDeque<Array<Cell>>()
+            repeat(fromScrollback) { pulled.addFirst(resizeLine(scrollback.removeLast(), newWidth)) }
+            Array(newHeight) { row ->
+                when {
+                    row < fromScrollback -> pulled[row]
+                    row < fromScrollback + oldHeight -> oldScreen[row - fromScrollback]
+                    else -> blankLine()
+                }
+            }
+        }
+
+        cursorCol = cursorCol.coerceIn(0, width - 1)
+        cursorRow = cursorRow.coerceIn(0, height - 1)
+    }
+
+    private fun resizeLine(line: Array<Cell>, newWidth: Int): Array<Cell> {
+        if (newWidth == line.size) return line
+        return Array(newWidth) { col -> if (col < line.size) line[col] else Cell() }
+    }
 
     // -- Content access -------------------------------------------------------
     //

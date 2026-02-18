@@ -926,9 +926,9 @@ class ResizeTest {
         buf.setCursor(0, 2)
         buf.writeText("GHI")
         buf.setCursor(0, 3)
-        buf.writeText("JKL")
+        buf.writeText("JK")
         buf.resize(3, 2)
-        // Top 2 rows ("ABC", "DEF") move to scrollback; screen keeps "GHI", "JKL"
+        // Top 2 rows ("ABC", "DEF") move to scrollback; screen keeps "GHI", "JK_"
         assertEquals(2, buf.scrollbackSize)
         assertEquals('A', buf.scrollback[0][0].char)
         assertEquals('D', buf.scrollback[1][0].char)
