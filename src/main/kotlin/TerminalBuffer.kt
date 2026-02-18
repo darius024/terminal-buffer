@@ -17,12 +17,12 @@ enum class StyleFlag {
 }
 
 data class CellAttributes(
-    val foreground: Colour = Colour.BLACK,
-    val background: Colour = Colour.BLACK,
+    val foreground: Colour = Colour.DEFAULT,
+    val background: Colour = Colour.DEFAULT,
     val styles: Set<StyleFlag> = emptySet(),
 )
 
 data class Cell(
-    val char: Char = '\u0000',
+    val char: Char = ' ',
     val attributes: CellAttributes = CellAttributes(),
 )
