@@ -40,12 +40,12 @@ class TerminalBuffer(
         private set
 
     fun setCursor(col: Int, row: Int) {
-        cursorCol = col
-        cursorRow = row
+        cursorCol = col.coerceIn(0, width - 1)
+        cursorRow = row.coerceIn(0, height - 1)
     }
 
-    fun moveCursorUp(n: Int) {}
-    fun moveCursorDown(n: Int) {}
-    fun moveCursorLeft(n: Int) {}
-    fun moveCursorRight(n: Int) {}
+    fun moveCursorUp(n: Int)    { cursorRow = (cursorRow - n).coerceAtLeast(0) }
+    fun moveCursorDown(n: Int)  { cursorRow = (cursorRow + n).coerceAtMost(height - 1) }
+    fun moveCursorLeft(n: Int)  { cursorCol = (cursorCol - n).coerceAtLeast(0) }
+    fun moveCursorRight(n: Int) { cursorCol = (cursorCol + n).coerceAtMost(width - 1) }
 }
