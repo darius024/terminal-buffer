@@ -5,33 +5,17 @@
  * colours, styles, a cursor, a visible screen region and a scrollback history.
  */
 
-enum class Colour {
-    DEFAULT,
-    BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE,
-    BRIGHT_BLACK, BRIGHT_RED, BRIGHT_GREEN, BRIGHT_YELLOW,
-    BRIGHT_BLUE, BRIGHT_MAGENTA, BRIGHT_CYAN, BRIGHT_WHITE,
-}
-
-enum class StyleFlag {
-    BOLD, ITALIC, UNDERLINE,
-}
-
-data class CellAttributes(
-    val foreground: Colour = Colour.DEFAULT,
-    val background: Colour = Colour.DEFAULT,
-    val styles: Set<StyleFlag> = emptySet(),
-)
-
-data class Cell(
-    val char: Char = ' ',
-    val attributes: CellAttributes = CellAttributes(),
-)
-
 class TerminalBuffer(
     width: Int,
     height: Int,
     val maxScrollback: Int = 1000,
 ) {
+    init {
+        require(width >= 1) { "width must be at least 1" }
+        require(height >= 1) { "height must be at least 1" }
+        require(maxScrollback >= 0) { "maxScrollback must not be negative" }
+    }
+
     var width: Int = width
         private set
     var height: Int = height
@@ -127,6 +111,8 @@ class TerminalBuffer(
     // -- Resize ---------------------------------------------------------------
 
     fun resize(newWidth: Int, newHeight: Int) {
+        require(newWidth >= 1) { "width must be at least 1" }
+        require(newHeight >= 1) { "height must be at least 1" }
         if (newWidth == width && newHeight == height) return
 
         val oldScreen = screen.map { resizeLine(it, newWidth) }
@@ -136,10 +122,7 @@ class TerminalBuffer(
 
         screen = if (newHeight <= oldHeight) {
             val excess = oldHeight - newHeight
-            for (i in 0 until excess) {
-                scrollback.addLast(oldScreen[i])
-                if (scrollback.size > maxScrollback) scrollback.removeFirst()
-            }
+            for (i in 0 until excess) pushToScrollback(oldScreen[i])
             Array(newHeight) { oldScreen[it + excess] }
         } else {
             val extra = newHeight - oldHeight
@@ -157,11 +140,6 @@ class TerminalBuffer(
 
         cursorCol = cursorCol.coerceIn(0, width - 1)
         cursorRow = cursorRow.coerceIn(0, height - 1)
-    }
-
-    private fun resizeLine(line: Array<Cell>, newWidth: Int): Array<Cell> {
-        if (newWidth == line.size) return line
-        return Array(newWidth) { col -> if (col < line.size) line[col] else Cell() }
     }
 
     // -- Content access -------------------------------------------------------
@@ -203,7 +181,7 @@ class TerminalBuffer(
 
     private fun cellAt(col: Int, row: Int): Cell? {
         val line = lineAt(row) ?: return null
-        if (col < 0 || col >= width) return null
+        if (col < 0 || col >= line.size) return null
         return line[col]
     }
 
@@ -265,29 +243,20 @@ class TerminalBuffer(
         }
     }
 
-    private fun scrollUp() {
-        scrollback.addLast(screen[0])
+    private fun pushToScrollback(line: Array<Cell>) {
+        scrollback.addLast(line)
         if (scrollback.size > maxScrollback) scrollback.removeFirst()
+    }
+
+    private fun resizeLine(line: Array<Cell>, newWidth: Int): Array<Cell> {
+        if (newWidth == line.size) return line
+        return Array(newWidth) { col -> if (col < line.size) line[col] else Cell() }
+    }
+
+    private fun scrollUp() {
+        pushToScrollback(screen[0])
         for (i in 1 until height) screen[i - 1] = screen[i]
         screen[height - 1] = blankLine()
         cursorRow = cursorRow.coerceAtMost(height - 1)
     }
-}
-
-/** Display width of a character: 2 for CJK / fullwidth, 1 otherwise. */
-fun charDisplayWidth(ch: Char): Int = when (ch.code) {
-    in 0x1100..0x115F,
-    in 0x2E80..0x303F,
-    in 0x3040..0x30FF,
-    in 0x3100..0x312F,
-    in 0x3130..0x318F,
-    in 0x3200..0x33FF,
-    in 0x3400..0x4DBF,
-    in 0x4E00..0x9FFF,
-    in 0xAC00..0xD7AF,
-    in 0xF900..0xFAFF,
-    in 0xFE30..0xFE4F,
-    in 0xFF01..0xFF60,
-    in 0xFFE0..0xFFE6 -> 2
-    else -> 1
 }
