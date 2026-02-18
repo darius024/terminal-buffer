@@ -75,9 +75,44 @@ class TerminalBuffer(
         if (cursorRow >= height) scrollUp()
     }
 
-    fun insertText(text: String) {}
+    /**
+     * Inserts text at the cursor, shifting existing content to the right.
+     * Overflow beyond the line width wraps to the next line.
+     */
+    fun insertText(text: String) {
+        if (text.isEmpty()) return
 
-    fun fillLine(ch: Char) {}
+        // Collect the tail of the current line (from cursor to end)
+        val tail = mutableListOf<Cell>()
+        for (col in cursorCol until width) tail.add(screen[cursorRow][col])
+
+        // Write the new text at the cursor (overwrites in place, wraps/scrolls)
+        val savedRow = cursorRow
+        writeText(text)
+
+        // Re-insert the saved tail at the cursor's new position
+        val insertCol = cursorCol
+        val insertRow = cursorRow
+        for (cell in tail) {
+            if (cursorRow >= height) scrollUp()
+            screen[cursorRow][cursorCol] = cell
+            cursorCol++
+            if (cursorCol >= width) {
+                cursorCol = 0
+                cursorRow++
+            }
+        }
+        if (cursorRow >= height) scrollUp()
+
+        // Restore cursor to just after the inserted text
+        cursorCol = insertCol
+        cursorRow = insertRow
+    }
+
+    fun fillLine(ch: Char) {
+        val cell = Cell(ch, currentAttributes)
+        for (col in 0 until width) screen[cursorRow][col] = cell
+    }
 
     /** Shifts all screen rows up by one, discarding the top row. */
     private fun scrollUp() {
