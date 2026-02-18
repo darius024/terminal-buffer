@@ -34,7 +34,7 @@ class TerminalBuffer(
 ) {
     val screen: Array<Array<Cell>> = Array(height) { blankLine() }
 
-    private fun blankLine(): Array<Cell> = Array(width) { Cell() }
+    // -- Cursor ---------------------------------------------------------------
 
     var cursorCol: Int = 0
         private set
@@ -51,6 +51,8 @@ class TerminalBuffer(
     fun moveCursorLeft(n: Int)  { cursorCol = (cursorCol - n).coerceAtLeast(0) }
     fun moveCursorRight(n: Int) { cursorCol = (cursorCol + n).coerceAtMost(width - 1) }
 
+    // -- Attributes -----------------------------------------------------------
+
     var currentAttributes: CellAttributes = CellAttributes()
         private set
 
@@ -62,17 +64,10 @@ class TerminalBuffer(
         currentAttributes = CellAttributes(foreground, background, styles)
     }
 
+    // -- Editing --------------------------------------------------------------
+
     fun writeText(text: String) {
-        for (ch in text) {
-            if (cursorRow >= height) scrollUp()
-            screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
-            cursorCol++
-            if (cursorCol >= width) {
-                cursorCol = 0
-                cursorRow++
-            }
-        }
-        if (cursorRow >= height) scrollUp()
+        for (ch in text) putCell(Cell(ch, currentAttributes))
     }
 
     /**
@@ -82,31 +77,15 @@ class TerminalBuffer(
     fun insertText(text: String) {
         if (text.isEmpty()) return
 
-        // Collect the tail of the current line (from cursor to end)
-        val tail = mutableListOf<Cell>()
-        for (col in cursorCol until width) tail.add(screen[cursorRow][col])
-
-        // Write the new text at the cursor (overwrites in place, wraps/scrolls)
-        val savedRow = cursorRow
+        val tail = screen[cursorRow].slice(cursorCol until width)
         writeText(text)
 
-        // Re-insert the saved tail at the cursor's new position
-        val insertCol = cursorCol
-        val insertRow = cursorRow
-        for (cell in tail) {
-            if (cursorRow >= height) scrollUp()
-            screen[cursorRow][cursorCol] = cell
-            cursorCol++
-            if (cursorCol >= width) {
-                cursorCol = 0
-                cursorRow++
-            }
-        }
-        if (cursorRow >= height) scrollUp()
+        val resumeCol = cursorCol
+        val resumeRow = cursorRow
+        for (cell in tail) putCell(cell)
 
-        // Restore cursor to just after the inserted text
-        cursorCol = insertCol
-        cursorRow = insertRow
+        cursorCol = resumeCol
+        cursorRow = resumeRow
     }
 
     fun fillLine(ch: Char) {
@@ -114,7 +93,22 @@ class TerminalBuffer(
         for (col in 0 until width) screen[cursorRow][col] = cell
     }
 
-    /** Shifts all screen rows up by one, discarding the top row. */
+    // -- Internal helpers -----------------------------------------------------
+
+    private fun blankLine(): Array<Cell> = Array(width) { Cell() }
+
+    /** Places a cell at the cursor, advances right, wraps and scrolls as needed. */
+    private fun putCell(cell: Cell) {
+        if (cursorRow >= height) scrollUp()
+        screen[cursorRow][cursorCol] = cell
+        cursorCol++
+        if (cursorCol >= width) {
+            cursorCol = 0
+            cursorRow++
+        }
+        if (cursorRow >= height) scrollUp()
+    }
+
     private fun scrollUp() {
         for (i in 1 until height) screen[i - 1] = screen[i]
         screen[height - 1] = blankLine()
