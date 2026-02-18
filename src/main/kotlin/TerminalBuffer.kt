@@ -67,7 +67,9 @@ class TerminalBuffer(
     // -- Editing --------------------------------------------------------------
 
     fun writeText(text: String) {
-        for (ch in text) putCell(Cell(ch, currentAttributes))
+        for (ch in text) {
+            if (charDisplayWidth(ch) == 2) putWideChar(ch) else putNarrowChar(ch)
+        }
     }
 
     /**
@@ -142,8 +144,17 @@ class TerminalBuffer(
 
     // -- Internal helpers -----------------------------------------------------
 
-    private fun lineToString(line: Array<Cell>): String =
-        String(CharArray(line.size) { line[it].char })
+    companion object {
+        const val CONTINUATION = '\u0000'
+    }
+
+    private fun lineToString(line: Array<Cell>): String {
+        val sb = StringBuilder()
+        for (cell in line) {
+            if (cell.char != CONTINUATION) sb.append(cell.char)
+        }
+        return sb.toString()
+    }
 
     private fun cellAt(col: Int, row: Int): Cell? {
         val line = lineAt(row) ?: return null
@@ -161,16 +172,52 @@ class TerminalBuffer(
 
     private fun blankLine(): Array<Cell> = Array(width) { Cell() }
 
-    /** Places a cell at the cursor, advances right, wraps and scrolls as needed. */
+    private fun putNarrowChar(ch: Char) {
+        if (cursorRow >= height) scrollUp()
+        clearPartialWideChar(cursorCol, cursorRow)
+        screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
+        advanceCursor(1)
+    }
+
+    private fun putWideChar(ch: Char) {
+        if (cursorRow >= height) scrollUp()
+        if (cursorCol == width - 1) {
+            screen[cursorRow][cursorCol] = Cell()
+            advanceCursor(1)
+            if (cursorRow >= height) scrollUp()
+        }
+        clearPartialWideChar(cursorCol, cursorRow)
+        clearPartialWideChar(cursorCol + 1, cursorRow)
+        screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
+        screen[cursorRow][cursorCol + 1] = Cell(CONTINUATION, currentAttributes)
+        advanceCursor(2)
+    }
+
+    /** Raw cell placement for insertText tail replay. */
     private fun putCell(cell: Cell) {
         if (cursorRow >= height) scrollUp()
         screen[cursorRow][cursorCol] = cell
-        cursorCol++
+        advanceCursor(1)
+    }
+
+    private fun advanceCursor(n: Int) {
+        cursorCol += n
         if (cursorCol >= width) {
             cursorCol = 0
             cursorRow++
         }
         if (cursorRow >= height) scrollUp()
+    }
+
+    /** If the cell at (col, row) is part of a wide character, clear the other half. */
+    private fun clearPartialWideChar(col: Int, row: Int) {
+        if (col < 0 || col >= width || row < 0 || row >= height) return
+        val cell = screen[row][col]
+        if (cell.char == CONTINUATION && col > 0) {
+            screen[row][col - 1] = Cell()
+        } else if (charDisplayWidth(cell.char) == 2 && col + 1 < width) {
+            screen[row][col + 1] = Cell()
+        }
     }
 
     private fun scrollUp() {
@@ -180,4 +227,22 @@ class TerminalBuffer(
         screen[height - 1] = blankLine()
         cursorRow = cursorRow.coerceAtMost(height - 1)
     }
+}
+
+/** Display width of a character: 2 for CJK / fullwidth, 1 otherwise. */
+fun charDisplayWidth(ch: Char): Int = when (ch.code) {
+    in 0x1100..0x115F,
+    in 0x2E80..0x303F,
+    in 0x3040..0x30FF,
+    in 0x3100..0x312F,
+    in 0x3130..0x318F,
+    in 0x3200..0x33FF,
+    in 0x3400..0x4DBF,
+    in 0x4E00..0x9FFF,
+    in 0xAC00..0xD7AF,
+    in 0xF900..0xFAFF,
+    in 0xFE30..0xFE4F,
+    in 0xFF01..0xFF60,
+    in 0xFFE0..0xFFE6 -> 2
+    else -> 1
 }
