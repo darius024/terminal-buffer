@@ -412,3 +412,140 @@ class WriteTextTest {
         assertEquals(' ', buf.screen[0][0].char)
     }
 }
+
+// -- Insert text --------------------------------------------------------------
+
+class InsertTextTest {
+
+    @Test fun `insert at start shifts content right`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("CDEF")
+        buf.setCursor(0, 0)
+        buf.insertText("AB")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('B', buf.screen[0][1].char)
+        assertEquals('C', buf.screen[0][2].char)
+        assertEquals('F', buf.screen[0][5].char)
+    }
+
+    @Test fun `insert at middle shifts tail right`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("ABEF")
+        buf.setCursor(2, 0)
+        buf.insertText("CD")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('B', buf.screen[0][1].char)
+        assertEquals('C', buf.screen[0][2].char)
+        assertEquals('D', buf.screen[0][3].char)
+        assertEquals('E', buf.screen[0][4].char)
+        assertEquals('F', buf.screen[0][5].char)
+    }
+
+    @Test fun `insert advances cursor past inserted text`() {
+        val buf = TerminalBuffer(10, 2)
+        buf.writeText("ABEF")
+        buf.setCursor(2, 0)
+        buf.insertText("CD")
+        assertEquals(4, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+    }
+
+    @Test fun `insert uses current attributes for new text`() {
+        val buf = TerminalBuffer(10, 2)
+        buf.writeText("AB")
+        buf.setCursor(1, 0)
+        buf.setAttributes(foreground = Colour.RED)
+        buf.insertText("X")
+        val red = CellAttributes(foreground = Colour.RED)
+        assertEquals(red, buf.screen[0][1].attributes)
+        assertEquals(CellAttributes(), buf.screen[0][0].attributes)
+        assertEquals(CellAttributes(), buf.screen[0][2].attributes)
+    }
+
+    @Test fun `insert wraps overflow to next line`() {
+        val buf = TerminalBuffer(4, 3)
+        buf.writeText("ABCD")
+        buf.setCursor(2, 0)
+        buf.insertText("XX")
+        // Row 0: A B X X, Row 1: C D _ _
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('B', buf.screen[0][1].char)
+        assertEquals('X', buf.screen[0][2].char)
+        assertEquals('X', buf.screen[0][3].char)
+        assertEquals('C', buf.screen[1][0].char)
+        assertEquals('D', buf.screen[1][1].char)
+        assertEquals(' ', buf.screen[1][2].char)
+    }
+
+    @Test fun `insert on empty line`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.insertText("Hi")
+        assertEquals('H', buf.screen[0][0].char)
+        assertEquals('i', buf.screen[0][1].char)
+        assertEquals(' ', buf.screen[0][2].char)
+        assertEquals(2, buf.cursorCol)
+    }
+
+    @Test fun `insert empty string is a no-op`() {
+        val buf = TerminalBuffer(6, 2)
+        buf.writeText("ABC")
+        buf.setCursor(1, 0)
+        buf.insertText("")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('B', buf.screen[0][1].char)
+        assertEquals('C', buf.screen[0][2].char)
+        assertEquals(1, buf.cursorCol)
+    }
+}
+
+// -- Fill line ----------------------------------------------------------------
+
+class FillLineTest {
+
+    @Test fun `fill line with character`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.fillLine('#')
+        for (col in 0 until 5) {
+            assertEquals('#', buf.screen[0][col].char)
+        }
+    }
+
+    @Test fun `fill line uses current attributes`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.setAttributes(foreground = Colour.GREEN)
+        buf.fillLine('*')
+        val expected = CellAttributes(foreground = Colour.GREEN)
+        for (col in 0 until 5) {
+            assertEquals(expected, buf.screen[0][col].attributes)
+        }
+    }
+
+    @Test fun `fill line fills the cursor row`() {
+        val buf = TerminalBuffer(4, 3)
+        buf.setCursor(0, 1)
+        buf.fillLine('-')
+        for (col in 0 until 4) {
+            assertEquals(' ', buf.screen[0][col].char)
+            assertEquals('-', buf.screen[1][col].char)
+            assertEquals(' ', buf.screen[2][col].char)
+        }
+    }
+
+    @Test fun `fill with space clears the line`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.writeText("Hello")
+        buf.setCursor(0, 0)
+        buf.fillLine(' ')
+        for (col in 0 until 5) {
+            assertEquals(' ', buf.screen[0][col].char)
+        }
+    }
+
+    @Test fun `fill does not move cursor`() {
+        val buf = TerminalBuffer(5, 2)
+        buf.setCursor(2, 1)
+        buf.fillLine('X')
+        assertEquals(2, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+}

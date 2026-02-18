@@ -75,6 +75,10 @@ class TerminalBuffer(
         if (cursorRow >= height) scrollUp()
     }
 
+    fun insertText(text: String) {}
+
+    fun fillLine(ch: Char) {}
+
     /** Shifts all screen rows up by one, discarding the top row. */
     private fun scrollUp() {
         for (i in 1 until height) screen[i - 1] = screen[i]
