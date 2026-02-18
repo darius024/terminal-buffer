@@ -50,4 +50,15 @@ class TerminalBuffer(
     fun moveCursorDown(n: Int)  { cursorRow = (cursorRow + n).coerceAtMost(height - 1) }
     fun moveCursorLeft(n: Int)  { cursorCol = (cursorCol - n).coerceAtLeast(0) }
     fun moveCursorRight(n: Int) { cursorCol = (cursorCol + n).coerceAtMost(width - 1) }
+
+    var currentAttributes: CellAttributes = CellAttributes()
+        private set
+
+    fun setAttributes(
+        foreground: Colour = Colour.DEFAULT,
+        background: Colour = Colour.DEFAULT,
+        styles: Set<StyleFlag> = emptySet(),
+    ) {}
+
+    fun writeText(text: String) {}
 }

@@ -263,3 +263,152 @@ class CursorMovementTest {
         assertEquals(10, buf.cursorRow)
     }
 }
+
+// -- Attributes ---------------------------------------------------------------
+
+class AttributeTest {
+
+    @Test fun `default attributes are all DEFAULT with no styles`() {
+        val buf = TerminalBuffer(80, 24)
+        assertEquals(CellAttributes(), buf.currentAttributes)
+    }
+
+    @Test fun `set foreground colour`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setAttributes(foreground = Colour.RED)
+        assertEquals(Colour.RED, buf.currentAttributes.foreground)
+        assertEquals(Colour.DEFAULT, buf.currentAttributes.background)
+    }
+
+    @Test fun `set background colour`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setAttributes(background = Colour.BLUE)
+        assertEquals(Colour.BLUE, buf.currentAttributes.background)
+    }
+
+    @Test fun `set style flags`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setAttributes(styles = setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE))
+        assertEquals(setOf(StyleFlag.BOLD, StyleFlag.UNDERLINE), buf.currentAttributes.styles)
+    }
+
+    @Test fun `set replaces all attributes at once`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setAttributes(
+            foreground = Colour.GREEN,
+            background = Colour.YELLOW,
+            styles = setOf(StyleFlag.ITALIC),
+        )
+        assertEquals(
+            CellAttributes(Colour.GREEN, Colour.YELLOW, setOf(StyleFlag.ITALIC)),
+            buf.currentAttributes,
+        )
+    }
+
+    @Test fun `set attributes overrides previous`() {
+        val buf = TerminalBuffer(80, 24)
+        buf.setAttributes(foreground = Colour.RED)
+        buf.setAttributes(foreground = Colour.BLUE)
+        assertEquals(Colour.BLUE, buf.currentAttributes.foreground)
+    }
+}
+
+// -- Write text ---------------------------------------------------------------
+
+class WriteTextTest {
+
+    @Test fun `write places characters at cursor`() {
+        val buf = TerminalBuffer(10, 3)
+        buf.writeText("Hi")
+        assertEquals('H', buf.screen[0][0].char)
+        assertEquals('i', buf.screen[0][1].char)
+        assertEquals(' ', buf.screen[0][2].char)
+    }
+
+    @Test fun `write uses current attributes`() {
+        val buf = TerminalBuffer(10, 3)
+        buf.setAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
+        buf.writeText("A")
+        val expected = CellAttributes(foreground = Colour.RED, styles = setOf(StyleFlag.BOLD))
+        assertEquals(expected, buf.screen[0][0].attributes)
+    }
+
+    @Test fun `write advances cursor`() {
+        val buf = TerminalBuffer(10, 3)
+        buf.writeText("Hello")
+        assertEquals(5, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+    }
+
+    @Test fun `write at mid-line overwrites existing`() {
+        val buf = TerminalBuffer(10, 3)
+        buf.writeText("ABCDE")
+        buf.setCursor(1, 0)
+        buf.writeText("xx")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('x', buf.screen[0][1].char)
+        assertEquals('x', buf.screen[0][2].char)
+        assertEquals('D', buf.screen[0][3].char)
+    }
+
+    @Test fun `write wraps to next line at right edge`() {
+        val buf = TerminalBuffer(4, 3)
+        buf.writeText("ABCDEF")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('D', buf.screen[0][3].char)
+        assertEquals('E', buf.screen[1][0].char)
+        assertEquals('F', buf.screen[1][1].char)
+        assertEquals(2, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+
+    @Test fun `write wraps across multiple lines`() {
+        val buf = TerminalBuffer(3, 4)
+        buf.writeText("ABCDEFGH")
+        assertEquals('A', buf.screen[0][0].char)
+        assertEquals('D', buf.screen[1][0].char)
+        assertEquals('G', buf.screen[2][0].char)
+        assertEquals('H', buf.screen[2][1].char)
+        assertEquals(2, buf.cursorCol)
+        assertEquals(2, buf.cursorRow)
+    }
+
+    @Test fun `write auto-scrolls when reaching bottom`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABCDEF")
+        // Screen is full: row 0 = "DEF", row 1 = "   " — wait, no.
+        // After writing 6 chars in a 3×2 buffer:
+        //   "ABC" fills row 0, wraps to row 1 → "DEF" fills row 1,
+        //   wraps to row 2 which is past the bottom → row 0 ("ABC") scrolls off,
+        //   rows shift up, cursor lands on the new empty bottom row.
+        // But we only wrote 6 chars = 2 full lines, so the wrap after "F" triggers scroll.
+        // Actually: after "DEF" cursor would be at col 0, row 2 → triggers scroll.
+        // After scroll: row 0 = "DEF", row 1 = blank, cursor at (0, 1).
+        assertEquals('D', buf.screen[0][0].char)
+        assertEquals('E', buf.screen[0][1].char)
+        assertEquals('F', buf.screen[0][2].char)
+        assertEquals(' ', buf.screen[1][0].char)
+        assertEquals(0, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+
+    @Test fun `write scrolls multiple times`() {
+        val buf = TerminalBuffer(3, 2)
+        buf.writeText("ABCDEFGHI")
+        // 9 chars in 3×2: fills 3 full lines, but only 2 fit.
+        // Row 0 = "GHI", row 1 = blank, cursor at (0, 1).
+        assertEquals('G', buf.screen[0][0].char)
+        assertEquals('H', buf.screen[0][1].char)
+        assertEquals('I', buf.screen[0][2].char)
+        assertEquals(0, buf.cursorCol)
+        assertEquals(1, buf.cursorRow)
+    }
+
+    @Test fun `write empty string is a no-op`() {
+        val buf = TerminalBuffer(10, 3)
+        buf.writeText("")
+        assertEquals(0, buf.cursorCol)
+        assertEquals(0, buf.cursorRow)
+        assertEquals(' ', buf.screen[0][0].char)
+    }
+}
