@@ -58,7 +58,27 @@ class TerminalBuffer(
         foreground: Colour = Colour.DEFAULT,
         background: Colour = Colour.DEFAULT,
         styles: Set<StyleFlag> = emptySet(),
-    ) {}
+    ) {
+        currentAttributes = CellAttributes(foreground, background, styles)
+    }
 
-    fun writeText(text: String) {}
+    fun writeText(text: String) {
+        for (ch in text) {
+            if (cursorRow >= height) scrollUp()
+            screen[cursorRow][cursorCol] = Cell(ch, currentAttributes)
+            cursorCol++
+            if (cursorCol >= width) {
+                cursorCol = 0
+                cursorRow++
+            }
+        }
+        if (cursorRow >= height) scrollUp()
+    }
+
+    /** Shifts all screen rows up by one, discarding the top row. */
+    private fun scrollUp() {
+        for (i in 1 until height) screen[i - 1] = screen[i]
+        screen[height - 1] = blankLine()
+        cursorRow = height - 1
+    }
 }
