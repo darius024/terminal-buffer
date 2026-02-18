@@ -772,9 +772,9 @@ class ContentAccessTest {
     }
 
     @Test fun `getScreenContent returns all screen lines`() {
-        val buf = TerminalBuffer(3, 2)
+        val buf = TerminalBuffer(3, 3)
         buf.writeText("ABCDEF")
-        assertEquals("ABC\nDEF", buf.getScreenContent())
+        assertEquals("ABC\nDEF\n   ", buf.getScreenContent())
     }
 
     @Test fun `getScreenContent trims nothing`() {

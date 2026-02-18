@@ -118,16 +118,48 @@ class TerminalBuffer(
     val scrollbackSize: Int get() = scrollback.size
 
     // -- Content access -------------------------------------------------------
+    //
+    // Unified row coordinates: row 0 = oldest scrollback line,
+    // row scrollbackSize = top screen line.
 
-    fun getChar(col: Int, row: Int): Char = ' '
+    fun getChar(col: Int, row: Int): Char = cellAt(col, row)?.char ?: ' '
 
-    fun getAttributes(col: Int, row: Int): CellAttributes = CellAttributes()
+    fun getAttributes(col: Int, row: Int): CellAttributes =
+        cellAt(col, row)?.attributes ?: CellAttributes()
 
-    fun getLine(row: Int): String = ""
+    fun getLine(row: Int): String {
+        val line = lineAt(row) ?: return ""
+        return String(CharArray(width) { line[it].char })
+    }
 
-    fun getScreenContent(): String = ""
+    fun getScreenContent(): String =
+        (0 until height).joinToString("\n") { row ->
+            String(CharArray(width) { col -> screen[row][col].char })
+        }
 
-    fun getAllContent(): String = ""
+    fun getAllContent(): String {
+        val sb = StringBuilder()
+        val totalRows = scrollbackSize + height
+        for (i in 0 until totalRows) {
+            if (i > 0) sb.append('\n')
+            sb.append(getLine(i))
+        }
+        return sb.toString()
+    }
+
+    private fun cellAt(col: Int, row: Int): Cell? {
+        val line = lineAt(row) ?: return null
+        if (col < 0 || col >= width) return null
+        return line[col]
+    }
+
+    private fun lineAt(row: Int): Array<Cell>? {
+        if (row < 0) return null
+        if (row < scrollbackSize) return scrollback[row]
+        val screenRow = row - scrollbackSize
+        if (screenRow >= height) return null
+        return screen[screenRow]
+    }
 
     // -- Internal helpers -----------------------------------------------------
 
