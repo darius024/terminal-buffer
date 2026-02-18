@@ -564,12 +564,12 @@ class InsertLineTest {
     }
 
     @Test fun `insert line shifts rows up`() {
-        val buf = TerminalBuffer(3, 2)
+        val buf = TerminalBuffer(3, 3)
         buf.writeText("ABC")
         buf.setCursor(0, 1)
         buf.writeText("DEF")
         buf.insertLine()
-        // Old row 1 ("DEF") becomes row 0, new blank row at row 1
+        // Row 0 ("ABC") scrolled off; row 1 ("DEF") becomes row 0; blank at bottom
         assertEquals('D', buf.screen[0][0].char)
         assertEquals('E', buf.screen[0][1].char)
         assertEquals('F', buf.screen[0][2].char)
@@ -605,7 +605,7 @@ class ScrollbackTest {
     }
 
     @Test fun `insert line pushes top row to scrollback`() {
-        val buf = TerminalBuffer(3, 2, maxScrollback = 10)
+        val buf = TerminalBuffer(3, 3, maxScrollback = 10)
         buf.writeText("ABC")
         buf.setCursor(0, 1)
         buf.writeText("DEF")

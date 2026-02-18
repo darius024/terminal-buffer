@@ -95,11 +95,21 @@ class TerminalBuffer(
 
     // -- Line operations ------------------------------------------------------
 
-    fun insertLine() {}
+    /** Shifts all rows up, pushes the top row to scrollback, blank row at bottom. */
+    fun insertLine() {
+        scrollUp()
+    }
 
-    fun clearScreen() {}
+    fun clearScreen() {
+        for (row in 0 until height) screen[row] = blankLine()
+        cursorCol = 0
+        cursorRow = 0
+    }
 
-    fun clearAll() {}
+    fun clearAll() {
+        clearScreen()
+        scrollback.clear()
+    }
 
     // -- Scrollback -----------------------------------------------------------
 
@@ -124,8 +134,10 @@ class TerminalBuffer(
     }
 
     private fun scrollUp() {
+        scrollback.addLast(screen[0])
+        if (scrollback.size > maxScrollback) scrollback.removeFirst()
         for (i in 1 until height) screen[i - 1] = screen[i]
         screen[height - 1] = blankLine()
-        cursorRow = height - 1
+        cursorRow = cursorRow.coerceAtMost(height - 1)
     }
 }
